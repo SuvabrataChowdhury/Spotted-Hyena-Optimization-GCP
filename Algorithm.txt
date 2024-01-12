@@ -1,0 +1,20 @@
+Algorithm SHO_GCP:
+
+Input: The Graph G, Max_itr
+Output: Chromatic Coloring of G
+
+Steps:
+	1. Initialize Agents.
+	2. Calculate fitness of Agents.
+	3. Determine Prey and Hyenaes.
+	4. While termination condition not met do:
+		4.1. Identify the potential candidate solutions, the number of those solutions N and create the cluster, vector C.
+		4.2. For each Agents do:
+			4.2.1. change the position of the Agent with,
+				vector P := vector C / N .
+		4.3. Identify any one agent as Prey and the rest as Hyenaes.
+		4.4. Calculate vectors B, E, h.
+		4.5. Calculate Distance of each Agents from Prey i.e., the vector D.
+		4.3. Update the positions of Hyenas based on the Prey's position.
+		4.4. Update fitness.
+	5. Return Prey
