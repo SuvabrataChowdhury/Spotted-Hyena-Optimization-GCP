@@ -182,12 +182,11 @@
 			//Add prey to the cluster
 			addVectors(cluster,agents[prey].position,agents[prey].dimension);
 
-			//Chase the pray
+			//Chase the prey
 			for(int j=0;j<numAgents;j++){
-				setVector(agents[j].position,cluster,agents[j].dimension,(double)i);
+				if(j!=prey)
+					setVector(agents[j].position,cluster,agents[j].dimension,(double)i);
 			}
-
-			prey = 0;
 
 			//Calculate the distance from prey
 			for(int j=0;j<numAgents;j++){
@@ -196,7 +195,8 @@
 
 			//Encircle the prey
 			for(int j=0;j<numAgents;j++){
-				encircle(agents[j],agents[prey],h);
+				if(j!=prey)
+					encircle(agents[j],agents[prey],h);
 			}
 			
 			//Update fitness of all agents

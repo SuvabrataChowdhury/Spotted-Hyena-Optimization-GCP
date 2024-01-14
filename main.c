@@ -10,8 +10,8 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 100
-#define NUM_AGENTS 10
+#define MAX_ITR 10000
+#define NUM_AGENTS 100
 
 void main(int argc, char *argv[]){
 	srand((unsigned)time(NULL));
