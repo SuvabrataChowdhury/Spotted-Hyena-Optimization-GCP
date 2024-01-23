@@ -9,18 +9,30 @@
 
 	//The search agent structure is as follows,
 	typedef struct Agent{
+		//Geometric Information
 		int dimension; //Defines in which dimension the agent lies
 		double *position; //Defines the position vector of the agent.
 		double *distFromPrey; //Defines the distance vector of the current agent from the prey i.e., the best solution.
+		
+		//Solution Information
 		int conflicts;
 		int totalColor;
-		double fitness; //Defines how good this agent is.
+		double fitness; //fitness_i := (COLOR_WEIGHT * total_color) + (CONFLICT_WEIGHT * conflict)
 	}Agent;
+
+	//Position of each agent defines a coloration of the graph
+	//The translation from a position component to a vertex color can be obtained by,
+	//	color_i := round(|position_i|)
+	int getColor(double pos){
+		return (int)round(fabs(pos));
+	}
 
 	int getConflicts(Agent agent,int edges[][2],int numEdges){
 		int numConflict = 0;
+		//For each edge do
 		for(int i=0;i<numEdges;i++){
-			if(((int)round(fabs(agent.position[edges[i][0]]))) == ((int)round(fabs(agent.position[edges[i][1]]))))
+			//If color of two adjacent vertex is same then increment numConflict
+			if( getColor(agent.position[edges[i][0]]) == getColor(agent.position[edges[i][1]]))
 				numConflict++;
 		}
 
@@ -38,6 +50,7 @@
 		return max;
 	}
 
+	//totalColor is the total number of unique colors used to color the graph
 	int getTotalColor(Agent agent){
 		double max = getMax(agent.position,agent.dimension);
 		int tableLength = (int)round(max+1);
@@ -45,7 +58,7 @@
 		
 		//store in the table
 		for(int i=0;i<agent.dimension;i++){
-			table[(int)round(fabs(agent.position[i]))] = true;
+			table[getColor(agent.position[i])] = true;
 		}
 
 		int totalColor = 0;
@@ -65,17 +78,25 @@
 	//Generates the initial configuration of agents
 	void getRandomAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges){
 		for(int i=0;i<numAgents;i++){
+			//Set the dimension of each vector as number of vertices of the graph
 			agents[i].dimension = numVertices;
+			//The position is a vector which defines position of each agent
 			agents[i].position = (double*) calloc(numVertices,sizeof(double));
 			
+			//Place the agent in a random position bounded by maxPos
 			for(int j=0;j<agents[i].dimension;j++){
 				agents[i].position[j] = ((rand()*(1.0))/RAND_MAX)*maxPos;
 			}
 
+			//Initiate distFromPrey vector
 			agents[i].distFromPrey = (double*) calloc(numVertices,sizeof(double));
 
+			//Get the solution related informations
+			//Initiate conflicts
 			agents[i].conflicts = getConflicts(agents[i],edges,numEdges);
+			//Initiate totalColor
 			agents[i].totalColor = getTotalColor(agents[i]);
+			//Initiate fitness
 			agents[i].fitness = getFitness(agents[i],numVertices,numEdges);
 		}
 	}
@@ -109,6 +130,7 @@
 		return ;
 	}
 
+	//Prey is the agent having maximum fitness
 	int locatePrey(Agent agents[],int numAgents){
 		int prey = 0;
 		for(int i=1;i<numAgents;i++){
@@ -125,9 +147,9 @@
 		}
 	}
 
-	void setVector(double vec1[],double vec2[],int len,double scaleFactor){
+	void moveToCentroid(Agent agent,double vec[],int len,double scaleFactor){
 		for(int i=0;i<len;i++){
-			vec1[i] = vec2[i]/scaleFactor;
+			agent.position[i] = vec[i]/scaleFactor;
 		}
 	}
 
@@ -157,6 +179,31 @@
 		printf("\n");
 	}
 
+	double getAvgFitness(Agent agents[],int numAgents){
+		double sum = 0.0;
+
+		for(int i=0;i<numAgents;i++){
+			sum = sum + agents[i].fitness;
+		}
+
+		return sum/numAgents;
+	}
+
+	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, double avgFitness){
+		int clusterSize = 0;
+		//For each agent
+		for(int i=0;i<numAgents;i++){
+			//If the agent is better than the average agent then add it to the cluster
+			if( (agents[i].fitness - avgFitness) >= 0.0){
+				addVectors(cluster,agents[i].position,clusterLength);
+				clusterSize = clusterSize + 1;
+			}
+		}
+
+		printf("Cluster Size = %d\n", clusterSize);
+		return clusterSize;
+	}
+
 	void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,Agent* solution){
 		//Initialize the agents
 		Agent agents[numAgents];
@@ -169,23 +216,23 @@
 		//Locate prey i.e., the best solution in the agents list
 		int prey = locatePrey(agents,numAgents);
 
-		/*
-		printf("\nThe prey is:\n");
-		printAgent(agents[prey]);
-		*/
-
 		double h = 5.0;
+		double avgFitness = getAvgFitness(agents,numAgents);
+		
+		int clusterSize = 0;
+
 		//The hunt begins..
-		printf("Iteration,Fitness,Conflicts,Total Color\n");
-		printf("0,%lf,%d,%d\n",agents[prey].fitness,agents[prey].conflicts,agents[prey].totalColor);
+		printf("Iteration,Fitness,AVG Fitness,Conflicts,Total Color\n");
+		printf("0,%lf,%lf,%d,%d\n",agents[prey].fitness,avgFitness,agents[prey].conflicts,agents[prey].totalColor);
 		for(int i=1;i<=maxItr;i++){
+			
 			//Add prey to the cluster
-			addVectors(cluster,agents[prey].position,agents[prey].dimension);
+			clusterSize = getCluster(cluster,numVertices,agents,numAgents,avgFitness);
 
 			//Chase the prey
 			for(int j=0;j<numAgents;j++){
 				if(j!=prey)
-					setVector(agents[j].position,cluster,agents[j].dimension,(double)i);
+					moveToCentroid(agents[j],cluster,agents[j].dimension,(double)clusterSize);
 			}
 
 			//Calculate the distance from prey
@@ -219,7 +266,14 @@
 			
 			//printAgent(agents[prey]);
 
-			printf("%d,%lf,%d,%d\n",i,agents[prey].fitness,agents[prey].conflicts,agents[prey].totalColor);
+			for(int i=0;i<numVertices;i++){
+				cluster[i] = 0;
+			}
+
+			clusterSize = 0;
+
+			avgFitness = getAvgFitness(agents,numAgents);
+			printf("%d,%lf,%lf,%d,%d\n",i,agents[prey].fitness,avgFitness,agents[prey].conflicts,agents[prey].totalColor);
 		}
 
 		//solution = &agents[prey];

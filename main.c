@@ -10,7 +10,7 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 10000
+#define MAX_ITR 1000
 #define NUM_AGENTS 100
 
 void main(int argc, char *argv[]){
