@@ -1,9 +1,6 @@
 #ifndef __AGENTS__
 	#define __AGENTS__
 
-	#define COLOR_WEIGHT 0.65
-	#define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
-
 	//Here a vector means a quantity which has both magnitude and direction.
 	//A vector is represented by a tuple consisting of numDimension number of vectors along each principle axis.
 
@@ -70,13 +67,13 @@
 		return totalColor;
 	}
 
-	double getFitness(Agent agent,int numVertices,int numEdges){
-		double fitness = (COLOR_WEIGHT * (numVertices - agent.totalColor)) + (CONFLICT_WEIGHT * (numEdges - agent.conflicts)) ;
+	double getFitness(Agent agent,int numVertices,int numEdges,double colorWeight,double conflictWeight){
+		double fitness = (colorWeight * (numVertices - agent.totalColor)) + (conflictWeight * (numEdges - agent.conflicts)) ;
 		return fitness;
 	}
 
 	//Generates the initial configuration of agents
-	void getRandomAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges){
+	void getRandomAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
 		for(int i=0;i<numAgents;i++){
 			//Set the dimension of each vector as number of vertices of the graph
 			agents[i].dimension = numVertices;
@@ -97,7 +94,7 @@
 			//Initiate totalColor
 			agents[i].totalColor = getTotalColor(agents[i]);
 			//Initiate fitness
-			agents[i].fitness = getFitness(agents[i],numVertices,numEdges);
+			agents[i].fitness = getFitness(agents[i],numVertices,numEdges,colorWeight,conflictWeight);
 		}
 	}
 
@@ -189,93 +186,34 @@
 		return sum/numAgents;
 	}
 
-	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, double avgFitness){
+	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, double avgFitness, double sdFitness){
 		int clusterSize = 0;
 		//For each agent
 		for(int i=0;i<numAgents;i++){
 			//If the agent is better than the average agent then add it to the cluster
-			if( (agents[i].fitness - avgFitness) >= 0.0){
+			if( (agents[i].fitness - avgFitness)/sdFitness >= 1.0){
 				addVectors(cluster,agents[i].position,clusterLength);
 				clusterSize = clusterSize + 1;
 			}
 		}
 
+		/*
+		printf("Avg Fitness = %lf\n",avgFitness);
+		printf("SD Fitness = %lf\n",sdFitness);
 		printf("Cluster Size = %d\n", clusterSize);
+		*/
+
 		return clusterSize;
 	}
 
-	void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,Agent* solution){
-		//Initialize the agents
-		Agent agents[numAgents];
-		getRandomAgents(agents,numAgents,numVertices,maxColor,edges,numEdges);
-		//printAgents(agents,numAgents);
-		
-		//Initialize the cluster as a null vector in the nth dimension
-		double *cluster = (double *)calloc(numVertices,sizeof(double));
+	double getStandardDeviationFitness(Agent agents[], int numAgents, double avgFitness){
+		double sumSquareDev = 0.0;
 
-		//Locate prey i.e., the best solution in the agents list
-		int prey = locatePrey(agents,numAgents);
-
-		double h = 5.0;
-		double avgFitness = getAvgFitness(agents,numAgents);
-		
-		int clusterSize = 0;
-
-		//The hunt begins..
-		printf("Iteration,Fitness,AVG Fitness,Conflicts,Total Color\n");
-		printf("0,%lf,%lf,%d,%d\n",agents[prey].fitness,avgFitness,agents[prey].conflicts,agents[prey].totalColor);
-		for(int i=1;i<=maxItr;i++){
-			
-			//Add prey to the cluster
-			clusterSize = getCluster(cluster,numVertices,agents,numAgents,avgFitness);
-
-			//Chase the prey
-			for(int j=0;j<numAgents;j++){
-				if(j!=prey)
-					moveToCentroid(agents[j],cluster,agents[j].dimension,(double)clusterSize);
-			}
-
-			//Calculate the distance from prey
-			for(int j=0;j<numAgents;j++){
-				setDistance(agents[j],agents[prey]);
-			}
-
-			//Encircle the prey
-			for(int j=0;j<numAgents;j++){
-				if(j!=prey)
-					encircle(agents[j],agents[prey],h);
-			}
-			
-			//Update fitness of all agents
-			for(int j=0;j<numAgents;j++){
-				agents[j].conflicts = getConflicts(agents[j],edges,numEdges);
-				agents[j].totalColor = getTotalColor(agents[j]);
-				agents[j].fitness = getFitness(agents[j],numVertices,numEdges);
-			}
-
-			prey = locatePrey(agents,numAgents);
-			
-			h =  5.0-((5.0*i)/maxItr);
-			
-			/*
-			printf("\nIteration no: %d\n",i);
-			printAgents(agents,numAgents);
-
-			printf("\nThe prey is:\n");
-			*/
-			
-			//printAgent(agents[prey]);
-
-			for(int i=0;i<numVertices;i++){
-				cluster[i] = 0;
-			}
-
-			clusterSize = 0;
-
-			avgFitness = getAvgFitness(agents,numAgents);
-			printf("%d,%lf,%lf,%d,%d\n",i,agents[prey].fitness,avgFitness,agents[prey].conflicts,agents[prey].totalColor);
+		for(int i=0;i<numAgents;i++){
+			sumSquareDev += pow((avgFitness - agents[i].fitness),2);
 		}
 
-		//solution = &agents[prey];
+		return sqrt(sumSquareDev/numAgents);
 	}
+
 #endif
