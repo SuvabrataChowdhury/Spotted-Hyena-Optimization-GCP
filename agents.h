@@ -1,6 +1,8 @@
 #ifndef __AGENTS__
 	#define __AGENTS__
 
+	#define EPS 0.000001
+
 	//Here a vector means a quantity which has both magnitude and direction.
 	//A vector is represented by a tuple consisting of numDimension number of vectors along each principle axis.
 
@@ -150,6 +152,9 @@
 		}
 	}
 
+	//D_h = |B * P_p - P_h|
+	//B = 2 * rd_1
+	//rd_1 belongs to [0,1]
 	void setDistance(Agent agent, Agent prey){
 		double randComponent = 0.0;
 		for(int i=0;i<agent.dimension;i++){
@@ -158,6 +163,8 @@
 		}
 	}
 
+	//P_h(x+1) = P_p - E * D_h
+	//E = 2 * rd_2 * h - h
 	void encircle(Agent hyena, Agent prey, double h){
 		double randComponent = 0.0;
 		double randScaleComponent = 0.0;
@@ -186,22 +193,50 @@
 		return sum/numAgents;
 	}
 
-	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, double avgFitness, double sdFitness){
-		int clusterSize = 0;
-		//For each agent
+	int getCluster( double cluster[], int clusterLength, Agent agents[], int numAgents){
+		double sumFitness = 0.0;
+
 		for(int i=0;i<numAgents;i++){
-			//If the agent is better than the average agent then add it to the cluster
-			if( (agents[i].fitness - avgFitness)/sdFitness >= 1.0){
-				addVectors(cluster,agents[i].position,clusterLength);
-				clusterSize = clusterSize + 1;
+			sumFitness = sumFitness + agents[i].fitness;
+		}
+
+		double randSum = 0.0;
+		double currSum = 0.0;
+
+		int index = 0;
+		int clusterSize = 0;
+		for(int i=0;i<numAgents;i++){
+			randSum = ((1.0*rand())/RAND_MAX) * sumFitness;
+			
+			currSum = 0.0;
+			index = 0;
+			while( (index < numAgents) && (currSum < randSum) ){
+				currSum = currSum + agents[index].fitness;
+				index++;
+			}
+
+			if( (currSum > randSum) && (index < numAgents) ){
+				addVectors(cluster,agents[index].position,clusterLength);
+				clusterSize++;
 			}
 		}
 
-		/*
-		printf("Avg Fitness = %lf\n",avgFitness);
-		printf("SD Fitness = %lf\n",sdFitness);
-		printf("Cluster Size = %d\n", clusterSize);
-		*/
+		return clusterSize;
+	}
+
+/*
+	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, double avgFitness, double sdFitness, int prey){
+		int clusterSize = 0;
+		//For each agent
+		for(int i=0;i<numAgents;i++){
+			if(i!=prey){
+				//If the agent is better than the average agent then add it to the cluster
+				if( (agents[i].fitness - avgFitness)/(sdFitness+EPS) >= 1.0){
+					addVectors(cluster,agents[i].position,clusterLength);
+					clusterSize = clusterSize + 1;
+				}
+			}
+		}
 
 		return clusterSize;
 	}
@@ -215,5 +250,5 @@
 
 		return sqrt(sumSquareDev/numAgents);
 	}
-
+*/
 #endif
