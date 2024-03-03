@@ -1,8 +1,6 @@
 #ifndef __AGENTS__
 	#define __AGENTS__
 
-	#define EPS 0.000001
-
 	//Here a vector means a quantity which has both magnitude and direction.
 	//A vector is represented by a tuple consisting of numDimension number of vectors along each principle axis.
 
@@ -38,12 +36,12 @@
 		return numConflict;
 	}
 
-	double getMax(double arr[],int len){
-		double max = fabs(arr[0]);
+	int getMax(double arr[],int len){
+		int max = getColor(arr[0]);
 
 		for(int i=1;i<len;i++){
-			if(fabs(arr[i])>max)
-				max = fabs(arr[i]);
+			if(getColor(arr[i])>max)
+				max = getColor(arr[i]);
 		}
 		
 		return max;
@@ -51,9 +49,8 @@
 
 	//totalColor is the total number of unique colors used to color the graph
 	int getTotalColor(Agent agent){
-		double max = getMax(agent.position,agent.dimension);
-		int tableLength = (int)round(max+1);
-		bool *table = (bool*) calloc(tableLength,sizeof(bool));
+		int max = getMax(agent.position,agent.dimension);
+		bool *table = (bool*) calloc(max+1,sizeof(bool));
 		
 		//store in the table
 		for(int i=0;i<agent.dimension;i++){
@@ -61,7 +58,7 @@
 		}
 
 		int totalColor = 0;
-		for(int i=0;i<tableLength;i++){
+		for(int i=0;i<max+1;i++){
 			if(table[i])
 				totalColor++;
 		}
@@ -165,6 +162,7 @@
 
 	//P_h(x+1) = P_p - E * D_h
 	//E = 2 * rd_2 * h - h
+	//rd_2 belongs to [0,1]
 	void encircle(Agent hyena, Agent prey, double h){
 		double randComponent = 0.0;
 		double randScaleComponent = 0.0;
@@ -192,8 +190,37 @@
 
 		return sum/numAgents;
 	}
+	
+	//Tournament Selection procedure
+	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, int prey){
+		int clusterSize = numAgents;
 
-	int getCluster( double cluster[], int clusterLength, Agent agents[], int numAgents){
+		for(int i=0;i<numAgents;i++){
+			int rand1 = rand()%numAgents;
+			int rand2 = rand()%numAgents;
+			
+			while(rand1==rand2){
+				rand2 = rand()%numAgents;
+			}
+
+			if(agents[rand1].fitness > agents[rand2].fitness){
+				addVectors(cluster,agents[rand1].position,clusterLength);
+			}
+			else{
+				addVectors(cluster,agents[rand2].position,clusterLength);
+			}
+		}
+
+		return clusterSize;
+	}
+
+	/*
+		getCluster:
+			Input: The agents list and a null cluster vector.
+			Output:	Constructed cluster with n best solutions and n
+			[Cluster gets created with roulette wheel selection method]
+	*/
+/*	int getCluster( double cluster[], int clusterLength, Agent agents[], int numAgents, int prey){
 		double sumFitness = 0.0;
 
 		for(int i=0;i<numAgents;i++){
@@ -215,7 +242,7 @@
 				index++;
 			}
 
-			if( (currSum > randSum) && (index < numAgents) ){
+			if( (currSum > randSum) && (index < numAgents)){
 				addVectors(cluster,agents[index].position,clusterLength);
 				clusterSize++;
 			}
@@ -223,7 +250,7 @@
 
 		return clusterSize;
 	}
-
+*/
 /*
 	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, double avgFitness, double sdFitness, int prey){
 		int clusterSize = 0;
