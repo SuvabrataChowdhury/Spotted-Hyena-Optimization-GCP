@@ -10,9 +10,9 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 10000
+#define MAX_ITR 1000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.20
+#define COLOR_WEIGHT 0.30
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
 void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,Agent* solution){
@@ -24,6 +24,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	
 	//Initialize the cluster as a null vector in the nth dimension
 	double *cluster = (double *)calloc(numVertices,sizeof(double));
+	bool *clusterTable = (bool *)calloc(NUM_AGENTS,sizeof(bool));
 
 	//Locate prey i.e., the best solution in the agents list
 	int prey = locatePrey(agents,numAgents);
@@ -39,11 +40,11 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	for(int i=1;i<=maxItr;i++){
 		
 		//Create the cluster
-		clusterSize = getCluster(cluster,numVertices,agents,numAgents,prey);
+		clusterSize = getCluster(cluster,clusterTable,numVertices,agents,numAgents,prey);
 
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
-			if(j!=prey)
+			if(!belongsIn(j,clusterTable,NUM_AGENTS))
 				moveToCentroid(agents[j],cluster,agents[j].dimension,(double)clusterSize);
 		}
 
@@ -54,15 +55,18 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		//Encircle the prey
 		for(int j=0;j<numAgents;j++){
-			if(j!=prey)
+			if(!belongsIn(j,clusterTable,NUM_AGENTS))
 				encircle(agents[j],agents[prey],h);
 		}
 		
 		//Update fitness of all agents
 		for(int j=0;j<numAgents;j++){
-			agents[j].conflicts = getConflicts(agents[j],edges,numEdges);
-			agents[j].totalColor = getTotalColor(agents[j]);
-			agents[j].fitness = getFitness(agents[j],numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
+			
+			if(!belongsIn(j,clusterTable,NUM_AGENTS)){
+				agents[j].conflicts = getConflicts(agents[j],edges,numEdges);
+				agents[j].totalColor = getTotalColor(agents[j]);
+				agents[j].fitness = getFitness(agents[j],numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
+			}
 		}
 
 		prey = locatePrey(agents,numAgents);
@@ -71,6 +75,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		for(int i=0;i<numVertices;i++){
 			cluster[i] = 0;
+			clusterTable[i] = false;
 		}
 
 		clusterSize = 0;

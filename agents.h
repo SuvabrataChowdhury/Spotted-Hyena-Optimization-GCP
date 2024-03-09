@@ -191,6 +191,11 @@
 		return sum/numAgents;
 	}
 	
+	bool belongsIn(int item,bool table[],int tableLength){
+		return item<tableLength && table[item];
+	}
+
+/*
 	//Tournament Selection procedure
 	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, int prey){
 		int clusterSize = numAgents;
@@ -213,14 +218,14 @@
 
 		return clusterSize;
 	}
-
+*/
 	/*
 		getCluster:
 			Input: The agents list and a null cluster vector.
 			Output:	Constructed cluster with n best solutions and n
 			[Cluster gets created with roulette wheel selection method]
 	*/
-/*	int getCluster( double cluster[], int clusterLength, Agent agents[], int numAgents, int prey){
+	int getCluster( double cluster[], bool clusterTable[],int clusterLength, Agent agents[], int numAgents, int prey){
 		double sumFitness = 0.0;
 
 		for(int i=0;i<numAgents;i++){
@@ -242,7 +247,8 @@
 				index++;
 			}
 
-			if( (currSum > randSum) && (index < numAgents)){
+			if( (currSum > randSum) && (index < numAgents) && index!=prey && !belongsIn(index,clusterTable)){
+				clusterTable[index] = true;
 				addVectors(cluster,agents[index].position,clusterLength);
 				clusterSize++;
 			}
@@ -250,7 +256,7 @@
 
 		return clusterSize;
 	}
-*/
+
 /*
 	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, double avgFitness, double sdFitness, int prey){
 		int clusterSize = 0;
