@@ -14,7 +14,7 @@
 		//Solution Information
 		int conflicts;
 		int totalColor;
-		double fitness; //fitness_i := (COLOR_WEIGHT * total_color) + (CONFLICT_WEIGHT * conflict)
+		double fitness; //fitness_i := (COLOR_WEIGHT * (num_vertices-total_color)) + (CONFLICT_WEIGHT * (num_edges-conflict))
 	}Agent;
 
 	//Position of each agent defines a coloration of the graph
@@ -195,6 +195,37 @@
 		return item<tableLength && table[item];
 	}
 
+	// Battle Royale Selection procedure
+	int getCluster(double cluster[], bool clusterTable[], int clusterLength, Agent agents[], int numAgents, int prey, double thresholdFitness){
+		//Initially cluster is empty
+		int clusterSize = 0;
+
+		//Select atleast two hyenas
+		while(clusterSize<3){
+			//For each agents do
+			for(int i=0;i<numAgents;i++){
+				//If agent is not prey and agent has not been selected and agent's fitness exceeds the threshold fitness then
+				if(i!=prey && !belongsIn(i,clusterTable,clusterLength) && agents[i].fitness>=thresholdFitness){
+					//Include the agent/hyena in the cluster
+					//Include it in cluster table
+					clusterTable[i] = true;
+					
+					//Include it in cluster
+					addVectors(cluster,agents[i].position,clusterLength);
+					
+					//Increment the clusterSize
+					clusterSize++;
+				}
+			}
+
+			//If less than 2 hyenas have been selected divide the threshold fitness by 2 to allow selection for new hyenas
+			thresholdFitness/=2.0;
+		}
+
+		//Return the cluster size
+		return clusterSize;
+	}
+
 /*
 	//Tournament Selection procedure
 	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, int prey){
@@ -225,7 +256,7 @@
 			Output:	Constructed cluster with n best solutions and n
 			[Cluster gets created with roulette wheel selection method]
 	*/
-	int getCluster( double cluster[], bool clusterTable[],int clusterLength, Agent agents[], int numAgents, int prey){
+/*	int getCluster( double cluster[], bool clusterTable[],int clusterLength, Agent agents[], int numAgents, int prey){
 		double sumFitness = 0.0;
 
 		for(int i=0;i<numAgents;i++){
@@ -256,7 +287,7 @@
 
 		return clusterSize;
 	}
-
+*/
 /*
 	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, double avgFitness, double sdFitness, int prey){
 		int clusterSize = 0;
