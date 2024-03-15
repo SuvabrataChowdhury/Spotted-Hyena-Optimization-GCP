@@ -12,7 +12,7 @@
 
 #define MAX_ITR 1000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.30
+#define COLOR_WEIGHT 0.45
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
 void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,Agent* solution){
@@ -31,20 +31,28 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 	double h = 5.0;
 	double avgFitness = getAvgFitness(agents,numAgents);
+	double sdFitness = getSDFitness(agents,numAgents,avgFitness);
 	
 	int clusterSize = 0;
 	double thresholdFitness = 0.0;
-	double initThreshold = agents[prey].fitness/2;
+	double initFitness = 0.0;
+	//double zoneParam = 0;
+	//double initZone = 1;
 
 	//The hunt begins..
-	printf("Iteration,Fitness,AVG Fitness,Cluster Size,Conflicts,Total Color\n");
-	printf("0,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,agents[prey].conflicts,agents[prey].totalColor);
+	printf("Iteration,Fitness,AVG Fitness,Standard Deviation,Cluster Size,Conflicts,Total Color\n");
+	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
 	for(int i=1;i<=maxItr;i++){
+		//Adjust the blue zone
+		//zoneParam = initZone - (i*initZone/maxItr);
+		
 		//Adjust the threshold fitness
-		thresholdFitness = (i*(COLOR_WEIGHT*numVertices+CONFLICT_WEIGHT*numEdges)+(MAX_ITR-i)*initThreshold)/MAX_ITR;
+		//thresholdFitness = agents[prey].fitness - (zoneParam * sdFitness);
+		initFitness = 0.5 * (avgFitness+agents[prey].fitness);
+		thresholdFitness = initFitness + (i*(agents[prey].fitness-initFitness)/maxItr); 
 
 		//Create the cluster
-		clusterSize = getCluster(cluster,clusterTable,numVertices,agents,numAgents,prey,thresholdFitness);
+		clusterSize = getCluster(cluster,clusterTable,numVertices,agents,numAgents,prey,thresholdFitness,sdFitness);
 
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
@@ -84,8 +92,9 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 
 		avgFitness = getAvgFitness(agents,numAgents);
+		sdFitness = getSDFitness(agents,numAgents,avgFitness);
 
-		printf("%d,%lf,%lf,%d,%d,%d\n",i,agents[prey].fitness,avgFitness,clusterSize,agents[prey].conflicts,agents[prey].totalColor);
+		printf("%d,%lf,%lf,%lf,%d,%d,%d\n",i,agents[prey].fitness,avgFitness,sdFitness,clusterSize,agents[prey].conflicts,agents[prey].totalColor);
 
 		clusterSize = 0;
 	}

@@ -81,7 +81,7 @@
 			
 			//Place the agent in a random position bounded by maxPos
 			for(int j=0;j<agents[i].dimension;j++){
-				agents[i].position[j] = ((rand()*(1.0))/RAND_MAX)*maxPos;
+				agents[i].position[j] = (((double)rand())/RAND_MAX)*(maxPos-1);
 			}
 
 			//Initiate distFromPrey vector
@@ -196,7 +196,7 @@
 	}
 
 	// Battle Royale Selection procedure
-	int getCluster(double cluster[], bool clusterTable[], int clusterLength, Agent agents[], int numAgents, int prey, double thresholdFitness){
+	int getCluster(double cluster[], bool clusterTable[], int clusterLength, Agent agents[], int numAgents, int prey, double thresholdFitness, double sdFitness){
 		//Initially cluster is empty
 		int clusterSize = 0;
 
@@ -218,8 +218,8 @@
 				}
 			}
 
-			//If less than 2 hyenas have been selected divide the threshold fitness by 2 to allow selection for new hyenas
-			thresholdFitness/=2.0;
+			//If less than 2 hyenas have been selected then decrement the threshold fitness by sd to allow selection for new hyenas
+			thresholdFitness -= sdFitness;
 		}
 
 		//Return the cluster size
@@ -304,8 +304,8 @@
 
 		return clusterSize;
 	}
-
-	double getStandardDeviationFitness(Agent agents[], int numAgents, double avgFitness){
+*/
+	double getSDFitness(Agent agents[], int numAgents, double avgFitness){
 		double sumSquareDev = 0.0;
 
 		for(int i=0;i<numAgents;i++){
@@ -314,5 +314,5 @@
 
 		return sqrt(sumSquareDev/numAgents);
 	}
-*/
+
 #endif
