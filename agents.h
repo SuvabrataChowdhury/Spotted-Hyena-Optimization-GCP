@@ -163,14 +163,14 @@
 	//P_h(x+1) = P_p - E * D_h
 	//E = 2 * rd_2 * h - h
 	//rd_2 belongs to [0,1]
-	void encircle(Agent hyena, Agent prey, double h){
+	void encircle(Agent hyena, Agent prey, double h, double maxPos){
 		double randComponent = 0.0;
 		double randScaleComponent = 0.0;
 
 		for(int i=0;i<hyena.dimension;i++){
 			randComponent = (1.0*rand())/RAND_MAX;
 			randScaleComponent = (2.0*h*randComponent) - h;
-			hyena.position[i] = prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]);
+			hyena.position[i] = fmod(fabs(prey.position[i] - (randScaleComponent * hyena.distFromPrey[i])), maxPos);
 		}
 	}
 
@@ -200,8 +200,8 @@
 		//Initially cluster is empty
 		int clusterSize = 0;
 
-		//Select atleast two hyenas
-		while(clusterSize<3){
+		//Select atleast clusterSize number of hyenas
+		while(clusterSize<2){
 			//For each agents do
 			for(int i=0;i<numAgents;i++){
 				//If agent is not prey and agent has not been selected and agent's fitness exceeds the threshold fitness then
@@ -213,7 +213,7 @@
 					//Include it in cluster
 					addVectors(cluster,agents[i].position,clusterLength);
 					
-					//Increment the clusterSize
+					//Increment the number of selected hyenas
 					clusterSize++;
 				}
 			}
@@ -221,6 +221,8 @@
 			//If less than 2 hyenas have been selected then decrement the threshold fitness by sd to allow selection for new hyenas
 			thresholdFitness -= sdFitness;
 		}
+
+		//printf("%d %lf\n",selectedHyenas,thresholdFitness);
 
 		//Return the cluster size
 		return clusterSize;

@@ -10,9 +10,9 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 1000
+#define MAX_ITR 10000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.45
+#define COLOR_WEIGHT 0.35
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
 void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,Agent* solution){
@@ -33,7 +33,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	double avgFitness = getAvgFitness(agents,numAgents);
 	double sdFitness = getSDFitness(agents,numAgents,avgFitness);
 	
-	int clusterSize = 0;
+	int clusterSize = 0.0;
 	double thresholdFitness = 0.0;
 	double initFitness = 0.0;
 	//double zoneParam = 0;
@@ -43,12 +43,11 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	printf("Iteration,Fitness,AVG Fitness,Standard Deviation,Cluster Size,Conflicts,Total Color\n");
 	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
 	for(int i=1;i<=maxItr;i++){
+		//printf("\n\nIteration: %d\n\n",i);
 		//Adjust the blue zone
-		//zoneParam = initZone - (i*initZone/maxItr);
-		
+
 		//Adjust the threshold fitness
-		//thresholdFitness = agents[prey].fitness - (zoneParam * sdFitness);
-		initFitness = 0.5 * (avgFitness+agents[prey].fitness);
+		initFitness = (agents[prey].fitness + avgFitness)/2;
 		thresholdFitness = initFitness + (i*(agents[prey].fitness-initFitness)/maxItr); 
 
 		//Create the cluster
@@ -68,7 +67,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 		//Encircle the prey
 		for(int j=0;j<numAgents;j++){
 			if(j!=prey && !belongsIn(j,clusterTable,NUM_AGENTS))
-				encircle(agents[j],agents[prey],h);
+				encircle(agents[j],agents[prey],h,maxColor-1);
 		}
 		
 		//Update fitness of all agents
@@ -85,6 +84,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 		
 		h =  5.0-((5.0*i)/maxItr);
 
+		//Empty the cluster for next iteration
 		for(int i=0;i<numVertices;i++){
 			cluster[i] = 0;
 			clusterTable[i] = false;
@@ -97,6 +97,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 		printf("%d,%lf,%lf,%lf,%d,%d,%d\n",i,agents[prey].fitness,avgFitness,sdFitness,clusterSize,agents[prey].conflicts,agents[prey].totalColor);
 
 		clusterSize = 0;
+		//printAgents(agents,numAgents);
 	}
 
 	//solution = &agents[prey];
