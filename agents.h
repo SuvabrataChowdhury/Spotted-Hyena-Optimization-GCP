@@ -17,6 +17,12 @@
 		double fitness; //fitness_i := (COLOR_WEIGHT * (num_vertices-total_color)) + (CONFLICT_WEIGHT * (num_edges-conflict))
 	}Agent;
 
+	void swap(int *num1, int *num2){
+		int temp = *num1;
+		*num1 = *num2;
+		*num2 = temp;
+	}
+
 	//Position of each agent defines a coloration of the graph
 	//The translation from a position component to a vertex color can be obtained by,
 	//	color_i := round(|position_i|)
@@ -126,6 +132,11 @@
 		return ;
 	}
 
+	int locatePrey(int topAgents[],int numTopAgents){
+		return topAgents[0];
+	}
+
+	/*
 	//Prey is the agent having maximum fitness
 	int locatePrey(Agent agents[],int numAgents){
 		int prey = 0;
@@ -136,6 +147,7 @@
 
 		return prey;
 	}
+	*/
 
 	void addVectors(double vec1[],double vec2[],int len){
 		for(int i=0;i<len;i++){
@@ -170,7 +182,8 @@
 		for(int i=0;i<hyena.dimension;i++){
 			randComponent = (1.0*rand())/RAND_MAX;
 			randScaleComponent = (2.0*h*randComponent) - h;
-			hyena.position[i] = fmod(fabs(prey.position[i] - (randScaleComponent * hyena.distFromPrey[i])), maxPos);
+			//To be modified the portal logic...
+			hyena.position[i] = prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]);
 		}
 	}
 
@@ -194,7 +207,35 @@
 	bool belongsIn(int item,bool table[],int tableLength){
 		return item<tableLength && table[item];
 	}
+	
+	//Stores top n agents in topAgents
+	//topAgents actually holds the indices of each best agents
+	void getTopAgents(Agent agents[],int numAgents,int topAgents[],int numTopAgents){
+		int lastPos = numTopAgents-1;
 
+		for(int i=0;i<numAgents;i++){
+			if(agents[i].fitness > agents[topAgents[lastPos]].fitness){
+				topAgents[lastPos] = i;
+
+				for(int j=lastPos;j>0;j--){
+					if(agents[topAgents[j-1]].fitness < agents[topAgents[j]].fitness){
+						swap(&topAgents[j],&topAgents[j-1]);
+					}
+					else
+						break;
+				}
+			}
+		}
+	}
+	
+	void getCluster(double cluster[], bool clusterTable[], int clusterLength, Agent agents[], int numAgents, int topAgents[], int numTopAgents){
+		for(int i=1;i<numTopAgents;i++){
+			clusterTable[topAgents[i]] = true;
+
+			addVectors(cluster,agents[i].position,clusterLength);
+		}
+	}
+/*
 	// Battle Royale Selection procedure
 	int getCluster(double cluster[], bool clusterTable[], int clusterLength, Agent agents[], int numAgents, int prey, double thresholdFitness, double sdFitness){
 		//Initially cluster is empty
@@ -227,7 +268,7 @@
 		//Return the cluster size
 		return clusterSize;
 	}
-
+*/
 /*
 	//Tournament Selection procedure
 	int getCluster(double cluster[], int clusterLength, Agent agents[], int numAgents, int prey){
