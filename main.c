@@ -10,9 +10,9 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 1000
+#define MAX_ITR 10000
 #define NUM_AGENTS 100
-#define CLUSTER_SIZE 20
+#define CLUSTER_SIZE 10
 #define COLOR_WEIGHT 0.35
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
@@ -46,25 +46,33 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	}
 	
 	//printf("The worst agent is: %d %lf\n",minIndex,agents[minIndex].fitness);
-	//Initialize topAgents with the worst agent
-	for(int j=0;j<clusterSize+1;j++){
-		topAgents[j] = minIndex;
-	}
 
 
 	//The hunt begins..
 	printf("Iteration,Fitness,AVG Fitness,Standard Deviation,Cluster Size,Conflicts,Total Color\n");
 	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
 	for(int i=1;i<=maxItr;i++){
+		//Initialize topAgents with the worst agent
+		for(int j=0;j<clusterSize+1;j++){
+			topAgents[j] = minIndex;
+		}
 		//Get top solutions
 		getTopAgents(agents,numAgents,topAgents,clusterSize+1);
 		
+		/*
+		for(int j=0;j<numAgents;j++){
+			printf("%lf ",agents[j].fitness);
+		}
+		printf("\n");
+		*/
+
 		/*
 		printf("The best solutions are:\n");
 		for(int j=0;j<clusterSize+1;j++){
 			printf("%d %lf\n",topAgents[j],agents[topAgents[j]].fitness);
 		}
 		*/
+
 		//Locate prey
 		prey = topAgents[0];
 

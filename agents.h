@@ -172,6 +172,15 @@
 		}
 	}
 
+	double teleport(double preyPosition, double trFactor, double maxPos){
+		if( trFactor > preyPosition ){
+			return maxPos-fmod(trFactor-preyPosition,maxPos);
+		}
+		else{
+			return fmod(preyPosition - trFactor,maxPos);
+		}
+	}
+
 	//P_h(x+1) = P_p - E * D_h
 	//E = 2 * rd_2 * h - h
 	//rd_2 belongs to [0,1]
@@ -183,7 +192,9 @@
 			randComponent = (1.0*rand())/RAND_MAX;
 			randScaleComponent = (2.0*h*randComponent) - h;
 			//To be modified the portal logic...
-			hyena.position[i] = prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]);
+			//hyena.position[i] = prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]);
+
+			hyena.position[i] = teleport(prey.position[i],randScaleComponent * hyena.distFromPrey[i],maxPos);
 		}
 	}
 
@@ -229,6 +240,7 @@
 	}
 	
 	void getCluster(double cluster[], bool clusterTable[], int clusterLength, Agent agents[], int numAgents, int topAgents[], int numTopAgents){
+
 		for(int i=1;i<numTopAgents;i++){
 			clusterTable[topAgents[i]] = true;
 
