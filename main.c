@@ -10,8 +10,8 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 1
-#define NUM_AGENTS 10
+#define MAX_ITR 1000
+#define NUM_AGENTS 100
 #define COLOR_WEIGHT 0.35
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
@@ -20,7 +20,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	Agent agents[numAgents];
 	getRandomAgents(agents,numAgents,numVertices,maxColor,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 	
-	printAgents(agents,numAgents);
+	//printAgents(agents,numAgents);
 	
 	//Initialize the cluster as a null vector in the nth dimension
 	double *cluster = (double *)calloc(numVertices,sizeof(double));
@@ -42,7 +42,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
 
 	for(int i=1;i<=maxItr;i++){
-		clusterSize = getCluster(cluster,clusterTable,numVertices,agents,numAgents,prey,bestHyena);
+		clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,bestHyena,maxColor-1);
 		//printf("ClusterSize: %d\n",clusterSize);
 
 		//Chase the prey

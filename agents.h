@@ -42,7 +42,15 @@
 		return numConflict;
 	}
 
-	int getMax(double arr[],int len){
+	double max(double num1, double num2){
+		return (num1>num2)?num1:num2;
+	}
+
+	double min(double num1, double num2){
+		return (num1<num2)?num1:num2;
+	}
+
+	int getMaxColor(double arr[],int len){
 		int max = getColor(arr[0]);
 
 		for(int i=1;i<len;i++){
@@ -55,7 +63,7 @@
 
 	//totalColor is the total number of unique colors used to color the graph
 	int getTotalColor(Agent agent){
-		int max = getMax(agent.position,agent.dimension);
+		int max = getMaxColor(agent.position,agent.dimension);
 		bool *table = (bool*) calloc(max+1,sizeof(bool));
 		
 		//store in the table
@@ -182,12 +190,21 @@
 		}
 	}
 
-	double teleport(double preyPosition, double trFactor, double maxPos){
-		if( trFactor > preyPosition ){
-			return maxPos-fmod(trFactor-preyPosition,maxPos);
+	double bound(double var, double maxPos){
+		if( var < 0 ){
+			return maxPos-fmod(fabs(var),maxPos);
 		}
 		else{
-			return fmod(preyPosition - trFactor,maxPos);
+			return fmod(var,maxPos);
+		}
+	}
+
+	double teleport(double agentPosition, double trFactor, double maxPos){
+		if( trFactor > agentPosition ){
+			return maxPos-fmod(trFactor-agentPosition,maxPos);
+		}
+		else{
+			return fmod(agentPosition - trFactor,maxPos);
 		}
 	}
 
@@ -204,7 +221,7 @@
 			//To be modified the portal logic...
 			//hyena.position[i] = prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]);
 
-			hyena.position[i] = teleport(prey.position[i],randScaleComponent * hyena.distFromPrey[i],maxPos);
+			hyena.position[i] = bound(prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]) ,maxPos);
 		}
 	}
 
@@ -229,6 +246,49 @@
 		return item<tableLength && table[item];
 	}
 
+	//Cluster formation using nearest neighbours based on fitness
+	int getCluster( int edges[][2], int numVertices, int numEdges, double colorWeight, double conflictWeight, double cluster[], bool clusterTable[], Agent agents[], int numAgents, int prey, int bestHyena, double maxPos){
+		//Initialize the dummyHyena which defines the range of solutions to be selected with
+		//the best hyena
+		Agent dummyHyena;
+
+		dummyHyena.dimension = numVertices;
+		dummyHyena.position = (double *)calloc(numVertices,sizeof(double));
+		dummyHyena.distFromPrey = (double *)calloc(numVertices,sizeof(double));
+
+		//Translate the dummyHyena from the best hyenas position with a random vector having components in [0.5,1]
+		for(int i=0;i<numVertices;i++){
+			dummyHyena.position[i] = bound(agents[bestHyena].position[i]+(((0.5*rand())/RAND_MAX) + 0.5),maxPos);
+		}
+
+		dummyHyena.conflicts = getConflicts(dummyHyena,edges,numEdges);
+		dummyHyena.totalColor = getTotalColor(dummyHyena);
+		dummyHyena.fitness = getFitness(dummyHyena,numVertices,numEdges,colorWeight,conflictWeight);
+
+		//Add the best hyena in the cluster,
+		int clusterSize = 1;
+
+		clusterTable[bestHyena] = true;
+
+		addVectors(cluster,agents[bestHyena].position,numVertices);
+
+		//For each agents do
+		for(int i=0;i<numAgents && clusterSize<10 ;i++){
+			//If any agent lies in the fitness range defined by bestHyena and dummyHyna then
+			if(i!=bestHyena && (agents[i].fitness>=min(agents[bestHyena].fitness,dummyHyena.fitness) && agents[i].fitness<=max(agents[bestHyena].fitness,dummyHyena.fitness))){
+				//include it in the cluster
+				clusterSize++;
+
+				clusterTable[i] = true;
+
+				addVectors(cluster,agents[i].position,numVertices);
+			}
+		}
+
+		return clusterSize;
+	}
+
+/*
 	//A vector R(r1,r2,r3,...,rn) is between the vectors P(p1,p2,p3,...,pn) and Q(q1,q2,q3,...,qn) iff
 	//for all i in [0,1] pi<=ri<=qi
 	bool isVecInRange(double vec[], double vec1[], double vec2[], int vecLength){
@@ -277,6 +337,7 @@
 
 		return clusterSize;
 	}
+*/
 /*	
 	//Stores top n agents in topAgents
 	//topAgents actually holds the indices of each best agents
