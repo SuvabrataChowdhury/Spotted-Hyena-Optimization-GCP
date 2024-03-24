@@ -132,11 +132,21 @@
 		return ;
 	}
 
-	int locatePrey(int topAgents[],int numTopAgents){
-		return topAgents[0];
-	}
+	
+	//Prey is the agent having maximum fitness
+	//BestHyena is the agent having second highest fitness
+	void locatePreyAndBestHyena(Agent agents[],int numAgents,int *prey,int *bestHyena){
+		*prey = 0;
+		*bestHyena = 0;
+		for(int i=1;i<numAgents;i++){
+			if(agents[i].fitness > agents[*prey].fitness)
+				*prey = i;
 
-	/*
+			if(agents[i].fitness < agents[*prey].fitness && agents[i].fitness > agents[*bestHyena].fitness)
+				*bestHyena = i;
+		}
+	}
+/*
 	//Prey is the agent having maximum fitness
 	int locatePrey(Agent agents[],int numAgents){
 		int prey = 0;
@@ -147,7 +157,7 @@
 
 		return prey;
 	}
-	*/
+*/
 
 	void addVectors(double vec1[],double vec2[],int len){
 		for(int i=0;i<len;i++){
@@ -218,7 +228,56 @@
 	bool belongsIn(int item,bool table[],int tableLength){
 		return item<tableLength && table[item];
 	}
-	
+
+	//A vector R(r1,r2,r3,...,rn) is between the vectors P(p1,p2,p3,...,pn) and Q(q1,q2,q3,...,qn) iff
+	//for all i in [0,1] pi<=ri<=qi
+	bool isVecInRange(double vec[], double vec1[], double vec2[], int vecLength){
+
+		for(int i=0;i<vecLength;i++){
+			if(vec[i]<vec1[i] || vec[i]>vec2[i]){
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	//Cluster formation using nearest neighbours
+	int getCluster(double cluster[], bool clusterTable[], int numDimentions, Agent agents[], int numAgents, int prey, int bestHyena){
+
+		//Get the top corner of the hypercube by translating the best hyena with a translation vector M in range [0.5,1]
+		double *topCorner = (double *)calloc(numDimentions,sizeof(double));
+
+		for(int i=0;i<numDimentions;i++){
+			//topCorner[i] = agents[bestHyena].position[i] + ( ((rand() * 0.5)/RAND_MAX) + 0.5);
+			topCorner[i] = agents[bestHyena].position[i] + 10;
+		}
+
+		printArr(agents[bestHyena].position,numDimentions);
+		printArr(topCorner,numDimentions);
+
+		//Count the number of hyenas that fall under the hypercube
+		int clusterSize = 1;
+
+		clusterTable[bestHyena] = true;
+
+		addVectors(cluster,agents[bestHyena].position,numDimentions);
+		//For each agents do
+		for(int i=0;i<numDimentions;i++){
+			//If the hyena lies in the hypercube then
+			if(i!=prey && i!=bestHyena && isVecInRange(agents[i].position,agents[bestHyena].position,topCorner,numDimentions)){
+				//add the agent in the cluster
+				clusterTable[i] = true;
+
+				addVectors(cluster,agents[i].position,numDimentions);
+
+				clusterSize++;
+			}
+		}
+
+		return clusterSize;
+	}
+/*	
 	//Stores top n agents in topAgents
 	//topAgents actually holds the indices of each best agents
 	void getTopAgents(Agent agents[],int numAgents,int topAgents[],int numTopAgents){
@@ -247,6 +306,7 @@
 			addVectors(cluster,agents[i].position,clusterLength);
 		}
 	}
+*/
 /*
 	// Battle Royale Selection procedure
 	int getCluster(double cluster[], bool clusterTable[], int clusterLength, Agent agents[], int numAgents, int prey, double thresholdFitness, double sdFitness){
