@@ -10,7 +10,7 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 1000
+#define MAX_ITR 10000
 #define NUM_AGENTS 100
 #define COLOR_WEIGHT 0.35
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
@@ -32,17 +32,17 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	
 	int clusterSize = 0;
 
-	int prey = 0;
-	int bestHyena = 0;
 	//Locate prey i.e., the best solution in the agents list
-	locatePreyAndBestHyena(agents,numAgents,&prey,&bestHyena);
+	int prey = locatePrey(agents,numAgents);
+	int bestHyena = locateBestHyena(agents,numAgents,prey);
+	int worstHyena = locateWorstHyena(agents,numAgents);
 
 	//The hunt begins..
 	printf("Iteration,Fitness,AVG Fitness,Standard Deviation,Cluster Size,Conflicts,Total Color\n");
 	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
 
 	for(int i=1;i<=maxItr;i++){
-		clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,bestHyena,maxColor-1);
+		clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,bestHyena,worstHyena,maxColor-1);
 		//printf("ClusterSize: %d\n",clusterSize);
 
 		//Chase the prey
@@ -71,7 +71,6 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 				agents[j].fitness = getFitness(agents[j],numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 			}
 		}
-
 		
 		h =  5.0-((5.0*i)/maxItr);
 
@@ -86,7 +85,9 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		printf("%d,%lf,%lf,%lf,%d,%d,%d\n",i,agents[prey].fitness,avgFitness,sdFitness,clusterSize,agents[prey].conflicts,agents[prey].totalColor);
 
-		locatePreyAndBestHyena(agents,numAgents,&prey,&bestHyena);
+		prey = locatePrey(agents,numAgents);
+		bestHyena = locateBestHyena(agents,numAgents,prey);
+		worstHyena = locateWorstHyena(agents,numAgents);
 		//printAgents(agents,numAgents);
 	}
 

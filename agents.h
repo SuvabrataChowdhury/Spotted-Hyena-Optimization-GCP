@@ -140,7 +140,18 @@
 		return ;
 	}
 
-	
+	void copyAgent(Agent *source,Agent *dest){
+		dest->dimension = source->dimension;
+
+		for(int i=0;i<(dest->dimension);i++){
+			dest->position[i] = source->position[i];
+		}
+		
+		dest->conflicts = source->conflicts;
+		dest->totalColor = source->totalColor;
+		dest->fitness = source->fitness;
+	}
+/*	
 	//Prey is the agent having maximum fitness
 	//BestHyena is the agent having second highest fitness
 	void locatePreyAndBestHyena(Agent agents[],int numAgents,int *prey,int *bestHyena){
@@ -154,7 +165,7 @@
 				*bestHyena = i;
 		}
 	}
-/*
+*/
 	//Prey is the agent having maximum fitness
 	int locatePrey(Agent agents[],int numAgents){
 		int prey = 0;
@@ -165,7 +176,28 @@
 
 		return prey;
 	}
-*/
+
+	//Prey is the agent having maximum fitness
+	int locateBestHyena(Agent agents[],int numAgents,int prey){
+		int bestHyena = 0;
+		for(int i=1;i<numAgents;i++){
+			if(i!=prey && agents[i].fitness > agents[bestHyena].fitness)
+				bestHyena = i;
+		}
+
+		return bestHyena;
+	}
+
+	//Prey is the agent having maximum fitness
+	int locateWorstHyena(Agent agents[],int numAgents){
+		int worstHyena = 0;
+		for(int i=1;i<numAgents;i++){
+			if(agents[i].fitness < agents[worstHyena].fitness)
+				worstHyena = i;
+		}
+
+		return worstHyena;
+	}
 
 	void addVectors(double vec1[],double vec2[],int len){
 		for(int i=0;i<len;i++){
@@ -247,7 +279,7 @@
 	}
 
 	//Cluster formation using nearest neighbours based on fitness
-	int getCluster( int edges[][2], int numVertices, int numEdges, double colorWeight, double conflictWeight, double cluster[], bool clusterTable[], Agent agents[], int numAgents, int prey, int bestHyena, double maxPos){
+	int getCluster( int edges[][2], int numVertices, int numEdges, double colorWeight, double conflictWeight, double cluster[], bool clusterTable[], Agent agents[], int numAgents, int prey, int bestHyena, int worstHyena, double maxPos){
 		//Initialize the dummyHyena which defines the range of solutions to be selected with
 		//the best hyena
 		Agent dummyHyena;
@@ -272,16 +304,30 @@
 
 		addVectors(cluster,agents[bestHyena].position,numVertices);
 
-		//For each agents do
-		for(int i=0;i<numAgents && clusterSize<10 ;i++){
-			//If any agent lies in the fitness range defined by bestHyena and dummyHyna then
-			if(i!=bestHyena && (agents[i].fitness>=min(agents[bestHyena].fitness,dummyHyena.fitness) && agents[i].fitness<=max(agents[bestHyena].fitness,dummyHyena.fitness))){
-				//include it in the cluster
-				clusterSize++;
+		//If gradient is positive then we might be near a maxima (either global or local)
+		//then explore that region
+		if(dummyHyena.fitness - agents[bestHyena].fitness > 0){
+			//replace the worst agent with dummyHyena
+			copyAgent(&dummyHyena,&agents[worstHyena]);
 
-				clusterTable[i] = true;
+			//Add the newly added dummyHyena to the cluster
+			clusterSize++;
+			clusterTable[worstHyena] = true;
 
-				addVectors(cluster,agents[i].position,numVertices);
+			addVectors(cluster,agents[worstHyena].position,numVertices);
+		}
+		else{
+			//For each agents do
+			for(int i=0;i<numAgents && clusterSize<10 ;i++){
+				//If any agent lies in the fitness range defined by bestHyena and dummyHyna then
+				if(i!=bestHyena && (agents[i].fitness>=min(agents[bestHyena].fitness,dummyHyena.fitness) && agents[i].fitness<=max(agents[bestHyena].fitness,dummyHyena.fitness))){
+					//include it in the cluster
+					clusterSize++;
+
+					clusterTable[i] = true;
+
+					addVectors(cluster,agents[i].position,numVertices);
+				}
 			}
 		}
 
