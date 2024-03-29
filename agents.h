@@ -317,17 +317,39 @@
 			addVectors(cluster,agents[worstHyena].position,numVertices);
 		}
 		else{
-			//For each agents do
-			for(int i=0;i<numAgents && clusterSize<10 ;i++){
-				//If any agent lies in the fitness range defined by bestHyena and dummyHyna then
-				if(i!=bestHyena && (agents[i].fitness>=min(agents[bestHyena].fitness,dummyHyena.fitness) && agents[i].fitness<=max(agents[bestHyena].fitness,dummyHyena.fitness))){
-					//include it in the cluster
-					clusterSize++;
+			int numBestAgents = 9;
+			int bestAgentsInRange[numBestAgents];
 
-					clusterTable[i] = true;
+			//Initialize the bestAgentsInRange with the worstAgent
+			for(int i=0;i<numBestAgents;i++){
+				bestAgentsInRange[i] = worstHyena;
+			}
 
-					addVectors(cluster,agents[i].position,numVertices);
+			//Construct the priority queue with top n best agents bounded by bestHyena and worstAgent
+			int lastIndex = 0;
+			for(int i=0;i<numAgents;i++){
+				if( (agents[i].fitness >= min(agents[bestHyena].fitness,dummyHyena.fitness) && agents[i].fitness <= max(agents[bestHyena].fitness,dummyHyena.fitness)) && (agents[bestAgentsInRange[lastIndex]].fitness < agents[i].fitness) ){
+					bestAgentsInRange[lastIndex] = i;
+
+					for(int j=lastIndex;j>0;j--){
+						if(agents[bestAgentsInRange[j-1]].fitness < agents[bestAgentsInRange[j]].fitness){
+							swap(&bestAgentsInRange[j-1],&bestAgentsInRange[j]);
+						}
+					}
+
+					if(lastIndex<numBestAgents-1)
+						lastIndex++;
 				}
+			}
+
+			//For each agents do
+			for(int i=0;i<=lastIndex;i++){
+				//include it in the cluster
+				clusterSize++;
+
+				clusterTable[bestAgentsInRange[i]] = true;
+
+				addVectors(cluster,agents[bestAgentsInRange[i]].position,numVertices);
 			}
 		}
 

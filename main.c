@@ -12,7 +12,7 @@
 
 #define MAX_ITR 10000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.35
+#define COLOR_WEIGHT 0.1
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
 void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,Agent* solution){
