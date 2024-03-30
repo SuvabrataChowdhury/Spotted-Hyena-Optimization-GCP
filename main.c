@@ -42,7 +42,8 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
 
 	for(int i=1;i<=maxItr;i++){
-		clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,sdFitness,maxColor-1);
+		clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,worstHyena,sdFitness,maxColor-1);
+		//clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,bestHyena,worstHyena,maxColor-1);
 		//printf("ClusterSize: %d\n",clusterSize);
 
 		//Chase the prey
@@ -75,9 +76,12 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 		h =  5.0-((5.0*i)/maxItr);
 
 		//Empty the cluster for next iteration
-		for(int i=0;i<numVertices;i++){
-			cluster[i] = 0;
-			clusterTable[i] = false;
+		for(int j=0;j<numVertices;j++){
+			cluster[j] = 0.0;
+		}
+
+		for(int j=0;j<numAgents;j++){
+			clusterTable[j] = false;
 		}
 
 		avgFitness = getAvgFitness(agents,numAgents);
