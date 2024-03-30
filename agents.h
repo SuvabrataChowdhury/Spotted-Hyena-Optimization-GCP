@@ -278,6 +278,44 @@
 		return item<tableLength && table[item];
 	}
 
+	int getCluster(int edges[][2], int numVertices, int numEdges, double colorWeight, double conflictWeight, double cluster[], bool clusterTable[], Agent agents[], int numAgents, int prey, double sdFitness, double maxPos){
+		Agent dummyHyena;
+
+		dummyHyena.dimension = numVertices;
+		dummyHyena.position = (double *)calloc(numVertices,sizeof(double));
+		dummyHyena.distFromPrey = (double *)calloc(numVertices,sizeof(double));
+
+		int clusterSize = 0;
+		//For each hyena find it's gradient (approx.)
+		for(int i=0;i<numAgents && clusterSize<10;i++){
+			//if agent is not prey then
+			if(i!=prey){
+				
+				//Translate the ith agent with a vector M which belongs in [0.5,1]
+				for(int j=0;j<numVertices;j++){
+					dummyHyena.position[j] = bound(agents[i].position[j] + ((rand()*0.5/RAND_MAX)+0.5), maxPos);
+				}
+
+				dummyHyena.conflicts = getConflicts(dummyHyena,edges,numEdges);
+				dummyHyena.totalColor = getTotalColor(dummyHyena);
+				dummyHyena.fitness = getFitness(dummyHyena,numVertices,numEdges,colorWeight,conflictWeight);
+
+				//if gradient in the direction of M is positive then
+				if(dummyHyena.fitness - agents[i].fitness > sdFitness){
+					//include it in the cluster
+					clusterSize++;
+					
+					clusterTable[i] = true;
+
+					addVectors(cluster,agents[i].position,numVertices);
+				}
+			}
+		}
+
+		return clusterSize;
+	}
+
+/*
 	//Cluster formation using nearest neighbours based on fitness
 	int getCluster( int edges[][2], int numVertices, int numEdges, double colorWeight, double conflictWeight, double cluster[], bool clusterTable[], Agent agents[], int numAgents, int prey, int bestHyena, int worstHyena, double maxPos){
 		//Initialize the dummyHyena which defines the range of solutions to be selected with
@@ -355,7 +393,7 @@
 
 		return clusterSize;
 	}
-
+*/
 /*
 	//A vector R(r1,r2,r3,...,rn) is between the vectors P(p1,p2,p3,...,pn) and Q(q1,q2,q3,...,qn) iff
 	//for all i in [0,1] pi<=ri<=qi
