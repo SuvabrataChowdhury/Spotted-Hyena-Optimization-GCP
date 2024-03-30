@@ -307,6 +307,8 @@
 				//if gradient in the direction of M is positive then
 				if(dummyHyena.fitness - agents[i].fitness > sdFitness){
 					//include it in the cluster
+					copyAgent(&dummyHyena,&agents[i]);
+
 					clusterSize++;
 					clusterTable[i] = true;
 					addVectors(cluster,agents[i].position,numVertices);
