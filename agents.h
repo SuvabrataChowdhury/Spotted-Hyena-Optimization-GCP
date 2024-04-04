@@ -204,12 +204,21 @@
 			vec1[i] = vec1[i] + vec2[i];
 		}
 	}
+	
+	
+	void moveToCentroid(Agent agent,double centroid[],int numDimension){
+		for(int i=0;i<numDimension;i++){
+			agent.position[i] = centroid[i];
+		}
+	}
 
+/*
 	void moveToCentroid(Agent agent,double vec[],int len,double scaleFactor){
 		for(int i=0;i<len;i++){
 			agent.position[i] = vec[i]/scaleFactor;
 		}
 	}
+*/
 
 	//D_h = |B * P_p - P_h|
 	//B = 2 * rd_1
@@ -277,7 +286,127 @@
 	bool belongsIn(int item,bool table[],int tableLength){
 		return item<tableLength && table[item];
 	}
+	
+	//Finds distance between two numbers arranged in a circular way
+	double circDist(double pos1, double pos2, double maxPos){
+		return fmod(pos2 + (maxPos-pos1),maxPos);
+	}
 
+	//Finds circular distance between two vectors where primary axis are not straight lines but
+	//they loop around after maxPos units
+	void circDistVec(double vec1[],double vec2[],double result[],double maxPos,int numDimension){
+		for(int i=0;i<numDimension;i++){
+			result[i] = circDist(vec1[i],vec2[i],maxPos);
+		}
+	}
+
+	//Scales a vector uniformly in each dimension with the given scaleFactor
+	void uniformScale(double vec[],double numDimension,double scaleFactor){
+		for(int i=0;i<numDimension;i++){
+			vec[i] = vec[i] * scaleFactor;
+		}
+	}
+
+	//Cluster formation using nearest neighbours based on fitness on a toric world
+	int getCluster(int edges[][2], int numVertices, int numEdges, double colorWeight, double conflictWeight, double circCentroid[], bool clusterTable[], Agent agents[], int numAgents, int prey, int bestHyena, int worstHyena, double maxPos){
+		//Initialize the dummyHyena which defines the range of solutions to be selected with
+		//the best hyena
+		Agent dummyHyena;
+
+		dummyHyena.dimension = numVertices;
+		dummyHyena.position = (double *)calloc(numVertices,sizeof(double));
+		dummyHyena.distFromPrey = (double *)calloc(numVertices,sizeof(double));
+
+		//Translate the dummyHyena from the best hyena's position with a random vector having components in [0.5,1]
+		for(int i=0;i<numVertices;i++){
+			dummyHyena.position[i] = bound(agents[bestHyena].position[i]+(((0.5*rand())/RAND_MAX) + 0.5),maxPos);
+		}
+
+		dummyHyena.conflicts = getConflicts(dummyHyena,edges,numEdges);
+		dummyHyena.totalColor = getTotalColor(dummyHyena);
+		dummyHyena.fitness = getFitness(dummyHyena,numVertices,numEdges,colorWeight,conflictWeight);
+
+		//Add the best hyena in the cluster,
+		int clusterSize = 0;
+
+		clusterTable[bestHyena] = true;
+
+		addVectors(circCentroid,agents[bestHyena].position,numVertices);
+
+		double *circDist = (double *)calloc(numVertices,sizeof(double));
+
+		//If gradient is positive then we might be near a maxima (either global or local)
+		//then explore that region
+		if(dummyHyena.fitness - agents[bestHyena].fitness > 0){
+			//replace the worst agent with dummyHyena
+			copyAgent(&dummyHyena,&agents[worstHyena]);
+
+			//Add the newly added dummyHyena to the cluster
+			clusterSize = 2;
+
+			clusterTable[worstHyena] = true;
+
+			circDistVec(agents[worstHyena].position,agents[bestHyena].position,circDist,maxPos,numVertices);
+			
+			uniformScale(circDist,numVertices,0.5);
+
+			addVectors(circCentroid,circDist,numVertices);
+		}
+		else{
+			int numBestAgents = 10;
+			int *bestAgentsInRange = (int*) calloc(numBestAgents,sizeof(int));
+
+			//Initialize the bestAgentsInRange with the worstAgent
+			for(int i=0;i<numBestAgents;i++){
+				bestAgentsInRange[i] = worstHyena;
+			}
+
+			bestAgentsInRange[0] = bestHyena;
+
+			//Construct the priority queue with top n best agents bounded by bestHyena and worstAgent
+			int lastIndex = 1;
+			for(int i=0;i<numAgents;i++){
+				if((agents[i].fitness >= dummyHyena.fitness && agents[i].fitness <= agents[bestHyena].fitness) && (agents[bestAgentsInRange[lastIndex]].fitness < agents[i].fitness)){
+
+					bestAgentsInRange[lastIndex] = i;
+
+					for(int j=lastIndex;j>0;j--){
+						if(agents[bestAgentsInRange[j-1]].fitness < agents[bestAgentsInRange[j]].fitness){
+							swap(&bestAgentsInRange[j-1],&bestAgentsInRange[j]);
+						}
+					}
+
+					if(lastIndex<numBestAgents-1)
+						lastIndex++;
+				}
+			}
+
+			int actualLastIndex = (lastIndex==numBestAgents-1) ? lastIndex : (lastIndex-1);
+			
+			clusterSize = actualLastIndex + 1;
+
+			//For each agents do
+			for(int i=actualLastIndex;i>0;i--){
+				//include it in the cluster
+
+				clusterTable[bestAgentsInRange[i]] = true;
+
+				circDistVec(agents[bestAgentsInRange[i]].position,agents[bestAgentsInRange[i-1]].position,circDist,maxPos,numVertices);
+				
+				uniformScale(circDist,numVertices,0.5);
+
+				addVectors(circCentroid,circDist,numVertices);
+			}
+		}
+
+		for(int i=0;i<numVertices;i++){
+			circCentroid[i] = fmod(circCentroid[i],maxPos);
+		}
+
+		return clusterSize;
+	}
+
+/*
 	int getCluster(int edges[][2], int numVertices, int numEdges, double colorWeight, double conflictWeight, double cluster[], bool clusterTable[], Agent agents[], int numAgents, int prey, int worstHyena, double sdFitness, double maxPos){
 		Agent dummyHyena;
 
@@ -318,6 +447,7 @@
 
 		return clusterSize;
 	}
+*/
 /*
 	//Cluster formation using nearest neighbours based on fitness
 	int getCluster( int edges[][2], int numVertices, int numEdges, double colorWeight, double conflictWeight, double cluster[], bool clusterTable[], Agent agents[], int numAgents, int prey, int bestHyena, int worstHyena, double maxPos){

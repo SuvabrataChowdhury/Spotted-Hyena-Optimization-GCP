@@ -10,7 +10,7 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 1000
+#define MAX_ITR 10000
 #define NUM_AGENTS 100
 #define COLOR_WEIGHT 0.1
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
@@ -42,14 +42,14 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
 
 	for(int i=1;i<=maxItr;i++){
-		clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,worstHyena,sdFitness,maxColor-1);
-		//clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,bestHyena,worstHyena,maxColor-1);
+		//clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,worstHyena,sdFitness,maxColor-1);
+		clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,bestHyena,worstHyena,maxColor-1);
 		//printf("ClusterSize: %d\n",clusterSize);
 
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
 			if(j!=prey && !belongsIn(j,clusterTable,NUM_AGENTS))
-				moveToCentroid(agents[j],cluster,agents[j].dimension,(double)clusterSize);
+				moveToCentroid(agents[j],cluster,agents[j].dimension);
 		}
 
 		//Calculate the distance from prey

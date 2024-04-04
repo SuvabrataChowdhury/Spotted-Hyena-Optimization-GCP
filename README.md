@@ -2,4 +2,4 @@
 <h1 align="center">Using Spotted Hyena Optimization to solve the Graph Coloring Problem</h1>
 Research Paper(SHO): https://drive.google.com/file/d/16aqCoUcHBb6Ml9H5tyzfTUAcnamN_0K-/view?usp=sharing
 Research Paper(MOSHO): https://drive.google.com/file/d/1fno6eSnTpztVkbDM6y-eeg8rJX4C3Srx/view?usp=drive_link
-<p>Need to reconsider the cluster forming method. It will be best to select top N best solutions and for that a heap needs to be maintained.</p>
+<p>The agents are roaming about a toroidal world where each principle axis is no longer a straight lines reaching infinity but those loop after the given bound units (in here it is the best obtained chromatic number so far). Need to study the geometry of such a toroidal world for further improvement of this algorithm</p>
