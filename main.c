@@ -23,7 +23,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	//printAgents(agents,numAgents);
 	
 	//Initialize the cluster as a null vector in the nth dimension
-	double *cluster = (double *)calloc(numVertices,sizeof(double));
+	double *circCentroid = (double *)calloc(numVertices,sizeof(double));
 	bool *clusterTable = (bool *)calloc(NUM_AGENTS,sizeof(bool));
 
 	double h = 5.0;
@@ -42,14 +42,13 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
 
 	for(int i=1;i<=maxItr;i++){
-		//clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,worstHyena,sdFitness,maxColor-1);
-		clusterSize = getCluster(edges,numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,cluster,clusterTable,agents,numAgents,prey,bestHyena,worstHyena,maxColor-1);
+		clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,maxColor-1,numVertices,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 		//printf("ClusterSize: %d\n",clusterSize);
 
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
 			if(j!=prey && !belongsIn(j,clusterTable,NUM_AGENTS))
-				moveToCentroid(agents[j],cluster,agents[j].dimension);
+				moveToCentroid(agents[j],circCentroid,agents[j].dimension);
 		}
 
 		//Calculate the distance from prey
@@ -77,7 +76,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		//Empty the cluster for next iteration
 		for(int j=0;j<numVertices;j++){
-			cluster[j] = 0.0;
+			circCentroid[j] = 0.0;
 		}
 
 		for(int j=0;j<numAgents;j++){
