@@ -53,7 +53,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		//Calculate the distance from prey
 		for(int j=0;j<numAgents;j++){
-			setDistance(agents[j],agents[prey]);
+			setDistance(agents[j],agents[prey],maxColor-1);
 		}
 
 		//Encircle the prey

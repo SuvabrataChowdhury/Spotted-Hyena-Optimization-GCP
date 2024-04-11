@@ -232,15 +232,28 @@
 	}
 */
 
-	//D_h = |B * P_p - P_h|
-	//B = 2 * rd_1
-	//rd_1 belongs to [0,1]
-	void setDistance(Agent agent, Agent prey){
-		double randComponent = 0.0;
-		for(int i=0;i<agent.dimension;i++){
-			randComponent = (1.0*rand())/RAND_MAX;
-			agent.distFromPrey[i] = fabs( (2 * randComponent * prey.position[i]) - agent.position[i]);
-		}
+	//Calculate the circular distance between pos1 and pos2 in the given direction bounded by maxPos
+	double circDist(double pos1, double pos2, double maxPos, CircDirection direction){
+		return (direction == ANTICLOCK)? fmod(pos2 + (maxPos-pos1),maxPos) : fmod(pos1 + (maxPos-pos2),maxPos);
+	}
+
+	//Finds the center of the arc between pos1 and pos2 in the given direction bounded by maxPos
+	double circAvg(double pos1, double pos2, double maxPos, CircDirection direction){
+		double startPoint = (direction == ANTICLOCK) ? pos1 : pos2;
+
+		return fmod((startPoint + 0.5 * circDist(pos1,pos2,maxPos,direction)),maxPos);
+	}
+
+	bool fequals(double val1,double val2){
+		return fabs(val1-val2) < EPSILON;
+	}
+
+	bool isBetween(double pos, double startPos, double endPos, double maxPos, CircDirection direction){
+		return fequals(circDist(startPos,pos,maxPos,direction) + circDist(pos,endPos,maxPos,direction),circDist(startPos,endPos,maxPos,direction));
+	}
+
+	CircDirection comp(CircDirection direction){
+		return (direction == ANTICLOCK)?CLOCK:ANTICLOCK;
 	}
 
 	//bound bounds the given variable with maxPos in such a way that if var goes out of the boundary then
@@ -254,12 +267,15 @@
 		}
 	}
 
-	double teleport(double agentPosition, double trFactor, double maxPos){
-		if( trFactor > agentPosition ){
-			return maxPos-fmod(trFactor-agentPosition,maxPos);
-		}
-		else{
-			return fmod(agentPosition - trFactor,maxPos);
+	//D_h = |B * P_p - P_h|
+	//B = 2 * rd_1
+	//rd_1 belongs to [0,1]
+	void setDistance(Agent agent, Agent prey, int maxPos){
+		double randComponent = 0.0;
+		for(int i=0;i<agent.dimension;i++){
+			randComponent = (1.0*rand())/RAND_MAX;
+			//agent.distFromPrey[i] = fabs( (2 * randComponent * prey.position[i]) - agent.position[i]);
+			agent.distFromPrey[i] = circDist(agent.position[i],(2 * randComponent * prey.position[i]),maxPos,ANTICLOCK);
 		}
 	}
 
@@ -273,7 +289,6 @@
 		for(int i=0;i<hyena.dimension;i++){
 			randComponent = (1.0*rand())/RAND_MAX;
 			randScaleComponent = (2.0*h*randComponent) - h;
-			//To be modified the portal logic...
 			//hyena.position[i] = prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]);
 
 			hyena.position[i] = bound(prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]) ,maxPos);
@@ -301,29 +316,6 @@
 		return item<tableLength && table[item];
 	}
 
-	//Calculate the circular distance between pos1 and pos2 in the given direction bounded by maxPos
-	double circDist(double pos1, double pos2, double maxPos, CircDirection direction){
-		return (direction == ANTICLOCK)? fmod(pos2 + (maxPos-pos1),maxPos) : fmod(pos1 + (maxPos-pos2),maxPos);
-	}
-
-	//Finds the center of the arc between pos1 and pos2 in the given direction bounded by maxPos
-	double circAvg(double pos1, double pos2, double maxPos, CircDirection direction){
-		double startPoint = (direction == ANTICLOCK) ? pos1 : pos2;
-
-		return fmod((startPoint + 0.5 * circDist(pos1,pos2,maxPos,direction)),maxPos);
-	}
-
-	bool fequals(double val1,double val2){
-		return fabs(val1-val2) < EPSILON;
-	}
-
-	bool isBetween(double pos, double startPos, double endPos, double maxPos, CircDirection direction){
-		return fequals(circDist(startPos,pos,maxPos,direction) + circDist(pos,endPos,maxPos,direction),circDist(startPos,endPos,maxPos,direction));
-	}
-
-	CircDirection comp(CircDirection direction){
-		return (direction == ANTICLOCK)?CLOCK:ANTICLOCK;
-	}
 
 	//Finds the toroidal center component in the given dimension with the given list of vectors.
 	//This center is chosen to be the center of the arc consisting of the most increasing regions of
