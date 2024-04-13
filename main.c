@@ -26,7 +26,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	double *circCentroid = (double *)calloc(numVertices,sizeof(double));
 	bool *clusterTable = (bool *)calloc(NUM_AGENTS,sizeof(bool));
 
-	double h = 5.0;
+	double h = 1.0;
 	double avgFitness = getAvgFitness(agents,numAgents);
 	double sdFitness = getSDFitness(agents,numAgents,avgFitness);
 	
@@ -42,6 +42,14 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
 
 	for(int i=1;i<=maxItr;i++){
+/*
+		printf("\nPrey[%d]: \n",prey);
+		printAgent(agents[prey]);
+
+		printf("\nHyena[%d]: \n",bestHyena);
+		printAgent(agents[bestHyena]);
+*/
+
 		clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,maxColor-1,numVertices,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 		//printf("ClusterSize: %d\n",clusterSize);
 
@@ -51,7 +59,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 				moveToCentroid(agents[j],circCentroid,agents[j].dimension);
 		}
 
-		//Calculate the distance from prey
+		//Calculate the weighted distance from prey
 		for(int j=0;j<numAgents;j++){
 			setDistance(agents[j],agents[prey],maxColor-1);
 		}
@@ -72,7 +80,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 			}
 		}
 		
-		h =  5.0-((5.0*i)/maxItr);
+		h =  1.0-(((double)i)/maxItr);
 
 		//Empty the cluster for next iteration
 		for(int j=0;j<numVertices;j++){
@@ -85,12 +93,14 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		avgFitness = getAvgFitness(agents,numAgents);
 		sdFitness = getSDFitness(agents,numAgents,avgFitness);
-
+		
+		//printf("h = %lf\n",h);
 		printf("%d,%lf,%lf,%lf,%d,%d,%d\n",i,agents[prey].fitness,avgFitness,sdFitness,clusterSize,agents[prey].conflicts,agents[prey].totalColor);
 
 		prey = locatePrey(agents,numAgents);
 		bestHyena = locateBestHyena(agents,numAgents,prey);
 		worstHyena = locateWorstHyena(agents,numAgents);
+		
 		//printAgents(agents,numAgents);
 	}
 

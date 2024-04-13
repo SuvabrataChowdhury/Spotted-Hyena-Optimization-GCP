@@ -193,7 +193,15 @@
 	//Prey is the agent having maximum fitness
 	int locateBestHyena(Agent agents[],int numAgents,int prey){
 		int bestHyena = 0;
-		for(int i=1;i<numAgents;i++){
+		
+		for(int i=0;i<numAgents;i++){
+			if(i!=prey){
+				bestHyena = i;
+				break;
+			}
+		}
+
+		for(int i=0;i<numAgents;i++){
 			if(i!=prey && agents[i].fitness > agents[bestHyena].fitness)
 				bestHyena = i;
 		}
@@ -266,7 +274,44 @@
 			return fmod(var,maxPos);
 		}
 	}
+/*	
+	//circular displacement is a vecor defined on the surface of the torus.
+	//It's magnitude determines the minimum distance between two points and the direction is defined from pos1 to pos2.
+	//A positive displacement indicates an anticlockwise rotation and a negative indicates a clockwise rotation
+	double circDisplacement(double pos1, double pos2, double maxPos){
+		double magnitude = min( circDist(pos1,pos2,maxPos,ANTICLOCK) , circDist(pos1,pos2,maxPos,CLOCK) );
+		
+		return ( fequals(bound(pos1+magnitude,maxPos),pos2) ) ? magnitude : (-1.0)*magnitude;
+	}
 
+	//D_h = (2-B) * circDisplacement(P_p,P_h)
+	//B belongs in [0,1]
+	void setDistance(Agent hyena, Agent prey, int maxPos){
+		double randComponent = 0.0;
+		
+		//For each dimension do
+		for(int i=0;i<hyena.dimension;i++){
+			randComponent = ((double)rand())/RAND_MAX;
+
+			hyena.distFromPrey[i] = (2.0-randComponent) * circDisplacement(prey.position[i],hyena.position[i],maxPos);
+		}
+	}
+
+	//E = 2 * rd * h
+	//P_h(x+1) = P_p + E * D_h
+	void encircle(Agent hyena, Agent prey, double spread, double maxPos){
+		double randComponent = 0.0;
+		double randScale = 0.0;
+
+		//For each dimension do
+		for(int i=0;i<hyena.dimension;i++){
+			randComponent = ((double) rand())/RAND_MAX;
+			randScale = 2 * randComponent * spread - spread;
+
+			hyena.position[i] = bound( (prey.position[i] + (randScale * hyena.distFromPrey[i])) , maxPos );
+		}
+	}
+*/
 	//D_h = |B * P_p - P_h|
 	//B = 2 * rd_1
 	//rd_1 belongs to [0,1]
