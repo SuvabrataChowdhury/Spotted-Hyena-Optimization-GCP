@@ -14,8 +14,9 @@
 #define NUM_AGENTS 100
 #define COLOR_WEIGHT 0.1
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
+#define H_MAX 1.0
 
-void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,Agent* solution){
+void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
 	//Initialize the agents
 	Agent agents[numAgents];
 	getRandomAgents(agents,numAgents,numVertices,maxColor,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
@@ -26,29 +27,35 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	double *circCentroid = (double *)calloc(numVertices,sizeof(double));
 	bool *clusterTable = (bool *)calloc(NUM_AGENTS,sizeof(bool));
 
-	double h = 1.0;
+	double h = H_MAX;
 	double avgFitness = getAvgFitness(agents,numAgents);
 	double sdFitness = getSDFitness(agents,numAgents,avgFitness);
 	
 	int clusterSize = 0;
 
 	//Locate prey i.e., the best solution in the agents list
-	int prey = locatePrey(agents,numAgents);
-	int bestHyena = locateBestHyena(agents,numAgents,prey);
-	int worstHyena = locateWorstHyena(agents,numAgents);
+	int prey,bestHyena,worstHyena;
+
+	//double prePreyFitness = -INF;
+	int startItr = 1;
 
 	//The hunt begins..
-	printf("Iteration,Fitness,AVG Fitness,Standard Deviation,Cluster Size,Conflicts,Total Color\n");
-	printf("0,%lf,%lf,%lf,0,%d,%d\n",agents[prey].fitness,avgFitness,sdFitness,agents[prey].conflicts,agents[prey].totalColor);
-
+	printf("Iteration,Best Fitness,AVG Fitness,Worst Fitness,Prey Conflicts,Prey Total Color,Worst Conflicts,Worst Total Color\n");
 	for(int i=1;i<=maxItr;i++){
-/*
-		printf("\nPrey[%d]: \n",prey);
-		printAgent(agents[prey]);
+		prey = locatePrey(agents,numAgents);
+		bestHyena = locateBestHyena(agents,numAgents,prey);
+		worstHyena = locateWorstHyena(agents,numAgents);
 
-		printf("\nHyena[%d]: \n",bestHyena);
-		printAgent(agents[bestHyena]);
-*/
+		printf("%d,%lf,%lf,%lf,%d,%d,%d,%d\n",i,agents[prey].fitness,avgFitness,agents[worstHyena].fitness,agents[prey].conflicts,agents[prey].totalColor,agents[worstHyena].conflicts,agents[worstHyena].totalColor);
+
+		if(agents[prey].conflicts==0 && agents[prey].totalColor<=knownChromaticNum)
+			break;
+		/*
+		if(agents[prey].fitness > prePreyFitness)
+			startItr = i;
+		*/
+
+		//prePreyFitness = agents[prey].fitness;
 
 		clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,maxColor-1,numVertices,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 		//printf("ClusterSize: %d\n",clusterSize);
@@ -80,8 +87,9 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 			}
 		}
 		
-		h =  1.0-(((double)i)/maxItr);
-
+		//h =  1.0-(((double)(i-startItr))/((double)(maxItr-startItr)));
+		h = H_MAX - (H_MAX*(((double)i)/maxItr));
+		
 		//Empty the cluster for next iteration
 		for(int j=0;j<numVertices;j++){
 			circCentroid[j] = 0.0;
@@ -93,15 +101,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		avgFitness = getAvgFitness(agents,numAgents);
 		sdFitness = getSDFitness(agents,numAgents,avgFitness);
-		
-		//printf("h = %lf\n",h);
-		printf("%d,%lf,%lf,%lf,%d,%d,%d\n",i,agents[prey].fitness,avgFitness,sdFitness,clusterSize,agents[prey].conflicts,agents[prey].totalColor);
 
-		prey = locatePrey(agents,numAgents);
-		bestHyena = locateBestHyena(agents,numAgents,prey);
-		worstHyena = locateWorstHyena(agents,numAgents);
-		
-		//printAgents(agents,numAgents);
 	}
 
 	//solution = &agents[prey];
@@ -136,7 +136,7 @@ void main(int argc, char *argv[]){
 	getGraphInfo(file,&knownChromaticNum,&numVertices,&numEdges,edges);
 	//displayGraph(edges,numEdges,numVertices,knownChromaticNum);
 	Agent solution;
-	SHO_GCP(edges,numEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum,&solution);
+	SHO_GCP(edges,numEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum,knownChromaticNum,&solution);
 
 	//printf("Obtained Solution:\n");
 	//printAgent(solution);

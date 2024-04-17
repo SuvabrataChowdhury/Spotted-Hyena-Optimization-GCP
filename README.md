@@ -5,3 +5,4 @@ Research Paper(MOSHO): https://drive.google.com/file/d/1fno6eSnTpztVkbDM6y-eeg8r
 <p>The agents are roaming about a toroidal world where each principle axis is no longer a straight lines reaching infinity but those loop after the given bound units (in here it is the best obtained chromatic number so far). Need to study the geometry of such a toroidal world for further improvement of this algorithm</p>
 <p>Cluster has been done by taking the center of the path which contains most increasing regions. Regions around the prey needs to be explored much more frequently</p>
 <p>The weighted distance calculation has been readjusted to fit into the toroidal world logic. The vector h needs to be adjusted correctly as per the toroidal world rules </p>
+<p>The worst hyenas can also be part of the cluster with lesser probability to increase the chances of faster convergence</p>
