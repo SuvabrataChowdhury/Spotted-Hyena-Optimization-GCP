@@ -10,11 +10,14 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 10000
+#define MAX_ITR 100000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.1
+#define COLOR_WEIGHT 0.10
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
+#define WORST_CHOICE_PROB 0.10
 #define H_MAX 1.0
+
+#define START_COUNTDOWN 1000
 
 void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
 	//Initialize the agents
@@ -36,8 +39,9 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	//Locate prey i.e., the best solution in the agents list
 	int prey,bestHyena,worstHyena;
 
-	//double prePreyFitness = -INF;
-	int startItr = 1;
+	double prePreyFitness = -INF;
+	bool improved = false;
+	int countDown = START_COUNTDOWN;
 
 	//The hunt begins..
 	printf("Iteration,Best Fitness,AVG Fitness,Worst Fitness,Prey Conflicts,Prey Total Color,Worst Conflicts,Worst Total Color\n");
@@ -50,15 +54,19 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		if(agents[prey].conflicts==0 && agents[prey].totalColor<=knownChromaticNum)
 			break;
-		/*
-		if(agents[prey].fitness > prePreyFitness)
-			startItr = i;
-		*/
-
-		//prePreyFitness = agents[prey].fitness;
 
 		clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,maxColor-1,numVertices,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 		//printf("ClusterSize: %d\n",clusterSize);
+
+		improved = (agents[prey].fitness > prePreyFitness);
+		countDown = (improved) ? START_COUNTDOWN : countDown-1;
+
+		if(countDown==0 && !improved){
+			prey = worstHyena;
+			countDown = START_COUNTDOWN;
+		}
+
+		prePreyFitness = agents[prey].fitness;
 
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
@@ -101,7 +109,6 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		avgFitness = getAvgFitness(agents,numAgents);
 		sdFitness = getSDFitness(agents,numAgents,avgFitness);
-
 	}
 
 	//solution = &agents[prey];
