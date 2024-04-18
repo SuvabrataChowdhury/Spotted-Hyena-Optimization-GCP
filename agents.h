@@ -108,7 +108,7 @@
 			
 			//Place the agent in a random position bounded by maxPos
 			for(int j=0;j<agents[i].dimension;j++){
-				agents[i].position[j] = (((double)rand())/RAND_MAX)*(maxPos-1);
+				agents[i].position[j] = (((double)rand())/RAND_MAX)*maxPos;
 			}
 
 			//Initiate distFromPrey vector
@@ -163,6 +163,12 @@
 		dest->conflicts = source->conflicts;
 		dest->totalColor = source->totalColor;
 		dest->fitness = source->fitness;
+	}
+
+	void copyVector(double source[],double dest[],int dimension){
+		for(int i=0;i<dimension;i++){
+			dest[i] = source[i];
+		}
 	}
 /*	
 	//Prey is the agent having maximum fitness
@@ -312,6 +318,15 @@
 		}
 	}
 */
+	void randomTranslate(Agent agent1,Agent agent2,double maxPos){
+		double randTr = 0.0;
+
+		for(int i=0;i<agent1.dimension;i++){
+			randTr = (maxPos*rand())/RAND_MAX;
+			agent1.position[i] = bound(agent2.position[i] + randTr, maxPos);
+		}
+	}
+
 	//D_h = |B * P_p - P_h|
 	//B = 2 * rd_1
 	//rd_1 belongs to [0,1]
