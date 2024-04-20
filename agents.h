@@ -97,7 +97,44 @@
 		double fitness = (colorWeight * (numVertices - agent.totalColor)) + (conflictWeight * (numEdges - agent.conflicts)) ;
 		return fitness;
 	}
+	
+	//Generates a random value which is biased towards the start value.
+	//The probability density function used is a straight line which is,
+	//	y=(2*(-x+n))/n^2 [only the half in 1st quadrant]
+	//Here n is the highest value.
+	double biasedRandom(double low, double high){
+		double random = ((double)rand())/RAND_MAX;
 
+		return ((high-low) * (1-sqrt(random)) + low);
+	}
+
+	void getBiasedAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
+		//For each agents do
+		for(int i=0;i<numAgents;i++){
+			//Set dimension of each vector as |V|
+			agents[i].dimension = numVertices;
+			//Position is a vector on the toroidal world
+			agents[i].position = (double*) calloc(numVertices,sizeof(double));
+
+			//Position the agent biased towards the origin i.e., the worst possible choice
+			for(int j=0;j<agents[i].dimension;j++){
+				agents[i].position[j] = biasedRandom(0.0,(double)maxPos);
+			}
+
+			//Initiate distFromPrey vector
+			agents[i].distFromPrey = (double*) calloc(numVertices,sizeof(double));
+
+			//Get the solution related informations
+			//Initiate conflicts
+			agents[i].conflicts = getConflicts(agents[i],edges,numEdges);
+			//Initiate totalColor
+			agents[i].totalColor = getTotalColor(agents[i]);
+			//Initiate fitness
+			agents[i].fitness = getFitness(agents[i],numVertices,numEdges,colorWeight,conflictWeight);
+		}
+	}
+
+/*
 	//Generates the initial configuration of agents
 	void getRandomAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
 		for(int i=0;i<numAgents;i++){
@@ -123,6 +160,7 @@
 			agents[i].fitness = getFitness(agents[i],numVertices,numEdges,colorWeight,conflictWeight);
 		}
 	}
+*/
 
 	void printAgent(Agent agent){
 		printf("Dimension = %d\n",agent.dimension);
