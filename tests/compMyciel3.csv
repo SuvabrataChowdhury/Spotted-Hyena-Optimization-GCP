@@ -1,3 +1,3 @@
 Iteration,Best Fitness,AVG Fitness,Worst Fitness,Prey Conflicts,Prey Total Color,Worst Conflicts,Worst Total Color
-1,17.800000,12.676000,7.100000,1,4,13,3
-2,18.700000,13.981000,9.700000,0,4,10,4
+1,16.900000,13.781000,9.800000,2,4,10,3
+2,18.700000,14.349000,10.700000,0,4,9,3

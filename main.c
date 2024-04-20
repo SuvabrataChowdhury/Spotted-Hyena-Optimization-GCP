@@ -15,6 +15,9 @@
 #define COLOR_WEIGHT 0.1
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
+#define WORST_CHOICE_PROB 0.1
+#define START_COUNTDOWN 1000
+
 #define H_MAX 1.0
 
 void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
@@ -39,6 +42,12 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	//Locate prey i.e., the best solution in the agents list
 	int prey,bestHyena,worstHyena;
 
+	double prePreyFitness = (-1.0)*INF;
+	bool improved = false;
+	int startValue = START_COUNTDOWN;
+	int countDown = startValue;
+	int startItr = 1;
+	
 	//The hunt begins..
 	printf("Iteration,Best Fitness,AVG Fitness,Worst Fitness,Prey Conflicts,Prey Total Color,Worst Conflicts,Worst Total Color\n");
 	for(int i=1;i<=maxItr;i++){
@@ -52,6 +61,31 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 		if(agents[prey].conflicts==0 && agents[prey].totalColor<=knownChromaticNum)
 			break;
+
+		//Check if the population has improved or not
+		improved = (agents[prey].fitness > prePreyFitness);
+		//If it is not then decrement the countDown value
+		countDown = (improved) ? startValue : countDown-1;
+
+		prePreyFitness = agents[prey].fitness;
+		
+		//When the countDown hits zero the agents are punished and
+		//they are pushed back towards the worst agent 
+		if(countDown==0 && !improved){
+			startValue+=START_COUNTDOWN;
+			
+			for(int j=0;j<numAgents;j++){
+				if(j!=worstHyena){
+					biasedTranslate(agents[j],agents[worstHyena],(double)maxColor-1);
+					
+					agents[j].conflicts = getConflicts(agents[j],edges,numEdges);
+					agents[j].totalColor = getTotalColor(agents[j]);
+					agents[j].fitness = getFitness(agents[j],numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
+				}
+			}
+
+			continue;
+		}
 
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){

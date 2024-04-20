@@ -97,6 +97,17 @@
 		double fitness = (colorWeight * (numVertices - agent.totalColor)) + (conflictWeight * (numEdges - agent.conflicts)) ;
 		return fitness;
 	}
+
+	//bound bounds the given variable with maxPos in such a way that if var goes out of the boundary then
+	//it comes right back around from the other direction 
+	double bound(double var, double maxPos){
+		if( var < 0 ){
+			return maxPos-fmod(fabs(var),maxPos);
+		}
+		else{
+			return fmod(var,maxPos);
+		}
+	}
 	
 	//Generates a random value which is biased towards the start value.
 	//The probability density function used is a straight line which is,
@@ -108,7 +119,18 @@
 		return ((high-low) * (1-sqrt(random)) + low);
 	}
 
+	void biasedTranslate(Agent agent,Agent worstHyena,double maxPos){
+		int sign = 1;
+
+		for(int i=0;i<agent.dimension;i++){
+			sign = (rand()%2 == 0) ? -1 : 1;
+			agent.position[i] = bound(worstHyena.position[i] + sign*biasedRandom(0.0,maxPos),maxPos);
+		}
+	}
+	
 	void getBiasedAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
+		int sign = 1;
+
 		//For each agents do
 		for(int i=0;i<numAgents;i++){
 			//Set dimension of each vector as |V|
@@ -117,8 +139,10 @@
 			agents[i].position = (double*) calloc(numVertices,sizeof(double));
 
 			//Position the agent biased towards the origin i.e., the worst possible choice
+			
 			for(int j=0;j<agents[i].dimension;j++){
-				agents[i].position[j] = biasedRandom(0.0,(double)maxPos);
+				sign = (rand()%2 == 0) ? -1 : 1;
+				agents[i].position[j] = bound( sign * biasedRandom(0.0,(double)maxPos) , maxPos );
 			}
 
 			//Initiate distFromPrey vector
@@ -308,16 +332,6 @@
 		return (direction == ANTICLOCK)?CLOCK:ANTICLOCK;
 	}
 
-	//bound bounds the given variable with maxPos in such a way that if var goes out of the boundary then
-	//it comes right back around from the other direction 
-	double bound(double var, double maxPos){
-		if( var < 0 ){
-			return maxPos-fmod(fabs(var),maxPos);
-		}
-		else{
-			return fmod(var,maxPos);
-		}
-	}
 /*	
 	//circular displacement is a vecor defined on the surface of the torus.
 	//It's magnitude determines the minimum distance between two points and the direction is defined from pos1 to pos2.
