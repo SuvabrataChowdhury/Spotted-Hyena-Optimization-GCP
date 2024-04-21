@@ -98,6 +98,13 @@
 		return fitness;
 	}
 
+	//The rest value defines how relax the hyena pack is.
+	//If the fitness difference between prey and the worst hyena is greated or the hunger bar
+	//is greater then the pack becomes restless and they focus on hunting.
+	double rest(double del,double hunger){
+		return del/hunger;
+	}
+
 	//bound bounds the given variable with maxPos in such a way that if var goes out of the boundary then
 	//it comes right back around from the other direction 
 	double bound(double var, double maxPos){

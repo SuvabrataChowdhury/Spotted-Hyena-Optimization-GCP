@@ -12,13 +12,17 @@
 
 #define MAX_ITR 100000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.1
+#define COLOR_WEIGHT 0.35
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
-#define WORST_CHOICE_PROB 0.1
-#define START_COUNTDOWN 1000
+#define START_COUNTDOWN 100
+#define START_HUNGER 0.1
 
 #define H_MAX 1.0
+
+double logistic(double x, double scaleFactor){
+	return (2.0/(1+exp(2*7.65*x/scaleFactor)) );
+}
 
 void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
 	//Initialize the agents
@@ -38,6 +42,8 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	double sdFitness = getSDFitness(agents,numAgents,avgFitness);
 	
 	int clusterSize = 0;
+
+	double hunger = START_HUNGER;
 
 	//Locate prey i.e., the best solution in the agents list
 	int prey,bestHyena,worstHyena;
@@ -68,12 +74,12 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 		countDown = (improved) ? startValue : countDown-1;
 
 		prePreyFitness = agents[prey].fitness;
-		
+
+
 		//When the countDown hits zero the agents are punished and
 		//they are pushed back towards the worst agent 
-		if(countDown==0 && !improved){
-			startValue+=START_COUNTDOWN;
-			
+		//if(((double)rand()/RAND_MAX) <= rest(agents[prey].fitness-agents[worstHyena].fitness,hunger)){
+		/*	
 			for(int j=0;j<numAgents;j++){
 				if(j!=worstHyena){
 					biasedTranslate(agents[j],agents[worstHyena],(double)maxColor-1);
@@ -84,9 +90,13 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 				}
 			}
 
-			continue;
+		*/
+		
+		if(((double)rand())/RAND_MAX <= logistic((double)i,(double)maxItr)){
+			//startValue*=2;
+			prey = worstHyena;
 		}
-
+		//else{
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
 			if(j!=prey && !belongsIn(j,clusterTable,NUM_AGENTS))
@@ -126,8 +136,12 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 			clusterTable[j] = false;
 		}
 
+		//}
+
 		avgFitness = getAvgFitness(agents,numAgents);
 		sdFitness = getSDFitness(agents,numAgents,avgFitness);
+
+		hunger = START_HUNGER + (INF-START_HUNGER) * (((double)i-1.0)/(maxItr-1.0));
 	}
 
 	//solution = &agents[prey];
