@@ -15,23 +15,16 @@
 #define COLOR_WEIGHT 0.35
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
-#define START_COUNTDOWN 100
-#define START_HUNGER 0.1
-
 #define H_MAX 1.0
 
-double logistic(double x, double scaleFactor){
-	return (2.0/(1+exp(2*7.65*x/scaleFactor)) );
-}
-
 void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
+
 	//Initialize the agents
 	Agent agents[numAgents];
 	//getRandomAgents(agents,numAgents,numVertices,maxColor-1,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 	getBiasedAgents(agents,numAgents,numVertices,maxColor-1,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 	
 	//printAgents(agents,numAgents);
-
 
 	//Initialize the cluster as a null vector in the nth dimension
 	double *circCentroid = (double *)calloc(numVertices,sizeof(double));
@@ -43,16 +36,8 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	
 	int clusterSize = 0;
 
-	double hunger = START_HUNGER;
-
 	//Locate prey i.e., the best solution in the agents list
 	int prey,bestHyena,worstHyena;
-
-	double prePreyFitness = (-1.0)*INF;
-	bool improved = false;
-	int startValue = START_COUNTDOWN;
-	int countDown = startValue;
-	int startItr = 1;
 	
 	//The hunt begins..
 	printf("Iteration,Best Fitness,AVG Fitness,Worst Fitness,Prey Conflicts,Prey Total Color,Worst Conflicts,Worst Total Color\n");
@@ -68,44 +53,10 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 		if(agents[prey].conflicts==0 && agents[prey].totalColor<=knownChromaticNum)
 			break;
 
-		//Check if the population has improved or not
-		improved = (agents[prey].fitness > prePreyFitness);
-		//If it is not then decrement the countDown value
-		countDown = (improved) ? startValue : countDown-1;
-
-		prePreyFitness = agents[prey].fitness;
-
-
-		//When the countDown hits zero the agents are punished and
-		//they are pushed back towards the worst agent 
-		//if(((double)rand()/RAND_MAX) <= rest(agents[prey].fitness-agents[worstHyena].fitness,hunger)){
-		/*	
-			for(int j=0;j<numAgents;j++){
-				if(j!=worstHyena){
-					biasedTranslate(agents[j],agents[worstHyena],(double)maxColor-1);
-					
-					agents[j].conflicts = getConflicts(agents[j],edges,numEdges);
-					agents[j].totalColor = getTotalColor(agents[j]);
-					agents[j].fitness = getFitness(agents[j],numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
-				}
-			}
-
-		*/
-		
-		if(((double)rand())/RAND_MAX <= logistic((double)i,(double)maxItr)){
-			//startValue*=2;
-			prey = worstHyena;
-		}
-		//else{
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
 			if(j!=prey && !belongsIn(j,clusterTable,NUM_AGENTS))
 				moveToCentroid(agents[j],circCentroid,agents[j].dimension);
-		}
-
-		//Calculate the weighted distance from prey
-		for(int j=0;j<numAgents;j++){
-			setDistance(agents[j],agents[prey],maxColor-1);
 		}
 
 		//Encircle the prey
@@ -124,9 +75,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 			}
 		}
 		
-		//h =  1.0-(((double)(i-startItr))/((double)(maxItr-startItr)));
 		h = H_MAX - (H_MAX*(((double)i)/maxItr));
-		
 		//Empty the cluster for next iteration
 		for(int j=0;j<numVertices;j++){
 			circCentroid[j] = 0.0;
@@ -136,12 +85,8 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 			clusterTable[j] = false;
 		}
 
-		//}
-
 		avgFitness = getAvgFitness(agents,numAgents);
 		sdFitness = getSDFitness(agents,numAgents,avgFitness);
-
-		hunger = START_HUNGER + (INF-START_HUNGER) * (((double)i-1.0)/(maxItr-1.0));
 	}
 
 	//solution = &agents[prey];

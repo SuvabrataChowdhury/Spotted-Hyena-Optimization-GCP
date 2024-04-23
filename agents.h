@@ -11,7 +11,6 @@
 		//Geometric Information
 		int dimension; //Defines in which dimension the agent lies
 		double *position; //Defines the position vector of the agent.
-		double *distFromPrey; //Defines the distance vector of the current agent from the prey i.e., the best solution.
 		
 		//Solution Information
 		int conflicts;
@@ -136,24 +135,23 @@
 	}
 	
 	void getBiasedAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
-		int sign = 1;
-
+		//int sign = 1;
+		
 		//For each agents do
 		for(int i=0;i<numAgents;i++){
 			//Set dimension of each vector as |V|
 			agents[i].dimension = numVertices;
-			//Position is a vector on the toroidal world
-			agents[i].position = (double*) calloc(numVertices,sizeof(double));
-
-			//Position the agent biased towards the origin i.e., the worst possible choice
 			
+			//Position the agent biased towards the origin i.e., the worst possible choice
+			agents[i].position = (double*) calloc(numVertices,sizeof(double));
 			for(int j=0;j<agents[i].dimension;j++){
-				sign = (rand()%2 == 0) ? -1 : 1;
-				agents[i].position[j] = bound( sign * biasedRandom(0.0,(double)maxPos) , maxPos );
+				//sign = (rand()%2 == 0) ? -1 : 1;
+				//agents[i].position[j] = bound( sign * biasedRandom(0.0,(double)maxPos) , maxPos );
+				agents[i].position[j] = biasedRandom(0.0,(double)maxPos);
 			}
 
 			//Initiate distFromPrey vector
-			agents[i].distFromPrey = (double*) calloc(numVertices,sizeof(double));
+			//agents[i].distFromPrey = (double*) calloc(numVertices,sizeof(double));
 
 			//Get the solution related informations
 			//Initiate conflicts
@@ -165,7 +163,6 @@
 		}
 	}
 
-/*
 	//Generates the initial configuration of agents
 	void getRandomAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
 		for(int i=0;i<numAgents;i++){
@@ -180,7 +177,7 @@
 			}
 
 			//Initiate distFromPrey vector
-			agents[i].distFromPrey = (double*) calloc(numVertices,sizeof(double));
+			//agents[i].distFromPrey = (double*) calloc(numVertices,sizeof(double));
 
 			//Get the solution related informations
 			//Initiate conflicts
@@ -191,7 +188,6 @@
 			agents[i].fitness = getFitness(agents[i],numVertices,numEdges,colorWeight,conflictWeight);
 		}
 	}
-*/
 
 	void printAgent(Agent agent){
 		printf("Dimension = %d\n",agent.dimension);
@@ -201,13 +197,15 @@
 			printf("%lf ",agent.position[i]);
 		}
 		printf("\n");
-
+		
+		/*
 		printf("Distance From Prey = ");
 		for(int i=0;i<agent.dimension;i++){
 			printf("%lf ",agent.distFromPrey[i]);
 		}
 		printf("\n");
-
+		*/
+		
 		printf("Conflicts = %d\n",agent.conflicts);
 		printf("Total Color = %d\n",agent.totalColor);
 		printf("Fitness = %lf\n",agent.fitness);
@@ -339,16 +337,17 @@
 		return (direction == ANTICLOCK)?CLOCK:ANTICLOCK;
 	}
 
-/*	
+	
 	//circular displacement is a vecor defined on the surface of the torus.
 	//It's magnitude determines the minimum distance between two points and the direction is defined from pos1 to pos2.
 	//A positive displacement indicates an anticlockwise rotation and a negative indicates a clockwise rotation
 	double circDisplacement(double pos1, double pos2, double maxPos){
 		double magnitude = min( circDist(pos1,pos2,maxPos,ANTICLOCK) , circDist(pos1,pos2,maxPos,CLOCK) );
 		
-		return ( fequals(bound(pos1+magnitude,maxPos),pos2) ) ? magnitude : (-1.0)*magnitude;
+		return magnitude;
 	}
 
+/*
 	//D_h = (2-B) * circDisplacement(P_p,P_h)
 	//B belongs in [0,1]
 	void setDistance(Agent hyena, Agent prey, int maxPos){
@@ -385,7 +384,7 @@
 			agent1.position[i] = bound(agent2.position[i] + randTr, maxPos);
 		}
 	}
-
+/*
 	//D_h = |B * P_p - P_h|
 	//B = 2 * rd_1
 	//rd_1 belongs to [0,1]
@@ -397,6 +396,7 @@
 			agent.distFromPrey[i] = circDist(agent.position[i],(2 * randComponent * prey.position[i]),maxPos,ANTICLOCK);
 		}
 	}
+*/
 
 	//P_h(x+1) = P_p - E * D_h
 	//E = 2 * rd_2 * h - h
@@ -404,13 +404,16 @@
 	void encircle(Agent hyena, Agent prey, double h, double maxPos){
 		double randComponent = 0.0;
 		double randScaleComponent = 0.0;
+		double distFromPrey = 0.0;
 
 		for(int i=0;i<hyena.dimension;i++){
 			randComponent = (1.0*rand())/RAND_MAX;
-			randScaleComponent = (2.0*h*randComponent) - h;
-			//hyena.position[i] = prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]);
 
-			hyena.position[i] = bound(prey.position[i] - (randScaleComponent * hyena.distFromPrey[i]) ,maxPos);
+			distFromPrey = circDisplacement(hyena.position[i],bound(2 * randComponent * prey.position[i],maxPos),maxPos);
+
+			randScaleComponent = (2.0*h*randComponent) - h;
+
+			hyena.position[i] = bound(prey.position[i] - (randScaleComponent * distFromPrey) ,maxPos);
 		}
 	}
 
@@ -471,7 +474,7 @@
 
 		dummyHyena.dimension = dimension;
 		dummyHyena.position = (double *) calloc(dimension,sizeof(double));
-		dummyHyena.distFromPrey = (double *) calloc(dimension,sizeof(double));
+		//dummyHyena.distFromPrey = (double *) calloc(dimension,sizeof(double));
 
 		//To find the gradient first place the dummyHyena by translating the bestHyena with a very small factor( in range [0.5,1] )
 		for(int i=0;i<dimension;i++){
