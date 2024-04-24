@@ -116,28 +116,26 @@
 	}
 	
 	//Generates a random value which is biased towards the start value.
-	//The probability density function used is a straight line which is,
-	//	y=(2*(-x+n))/n^2 [only the half in 1st quadrant]
+	//The probability density function used is a exponential decay function which is,
+	//	y = e^(10x/n) [only the half in 1st quadrant]
 	//Here n is the highest value.
-	double biasedRandom(double high){
+	double biasedRandom(double low,double high){
 		double random = ((double)rand())/RAND_MAX;
 
-		return (-high/10.0)*log(exp(-10)*(1-random)+random);
+		return (-high/10.0)*log(exp(-10)*(1-random)+random*exp(-10*low/high));
 	}
-
-/*	
+	
 	void biasedTranslate(Agent agent,Agent worstHyena,double maxPos){
 		int sign = 1;
 
 		for(int i=0;i<agent.dimension;i++){
 			sign = (rand()%2 == 0) ? -1 : 1;
-			agent.position[i] = bound(worstHyena.position[i] + sign*biasedRandom(0.0,maxPos),maxPos);
+			agent.position[i] = bound(worstHyena.position[i] + sign*biasedRandom(0.0,(double)maxPos),(double)maxPos);
 		}
 	}
-*/
 
 	void getBiasedAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
-		//int sign = 1;
+		int sign = 1;
 		
 		//For each agents do
 		for(int i=0;i<numAgents;i++){
@@ -147,13 +145,10 @@
 			//Position the agent biased towards the origin i.e., the worst possible choice
 			agents[i].position = (double*) calloc(numVertices,sizeof(double));
 			for(int j=0;j<agents[i].dimension;j++){
-				//sign = (rand()%2 == 0) ? -1 : 1;
-				//agents[i].position[j] = bound( sign * biasedRandom(0.0,(double)maxPos) , maxPos );
-				agents[i].position[j] = biasedRandom((double)maxPos);
+				sign = (rand()%2 == 0) ? -1 : 1;
+				agents[i].position[j] = bound( ((double)maxPos/2.0) + sign * biasedRandom(0.0,(double)maxPos) , maxPos );
+				//agents[i].position[j] = biasedRandom(0.0,(double)maxPos);
 			}
-
-			//Initiate distFromPrey vector
-			//agents[i].distFromPrey = (double*) calloc(numVertices,sizeof(double));
 
 			//Get the solution related informations
 			//Initiate conflicts
