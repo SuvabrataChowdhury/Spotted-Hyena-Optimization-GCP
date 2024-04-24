@@ -119,12 +119,13 @@
 	//The probability density function used is a straight line which is,
 	//	y=(2*(-x+n))/n^2 [only the half in 1st quadrant]
 	//Here n is the highest value.
-	double biasedRandom(double low, double high){
+	double biasedRandom(double high){
 		double random = ((double)rand())/RAND_MAX;
 
-		return ((high-low) * (1-sqrt(random)) + low);
+		return (-high/10.0)*log(exp(-10)*(1-random)+random);
 	}
 
+/*	
 	void biasedTranslate(Agent agent,Agent worstHyena,double maxPos){
 		int sign = 1;
 
@@ -133,7 +134,8 @@
 			agent.position[i] = bound(worstHyena.position[i] + sign*biasedRandom(0.0,maxPos),maxPos);
 		}
 	}
-	
+*/
+
 	void getBiasedAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
 		//int sign = 1;
 		
@@ -147,7 +149,7 @@
 			for(int j=0;j<agents[i].dimension;j++){
 				//sign = (rand()%2 == 0) ? -1 : 1;
 				//agents[i].position[j] = bound( sign * biasedRandom(0.0,(double)maxPos) , maxPos );
-				agents[i].position[j] = biasedRandom(0.0,(double)maxPos);
+				agents[i].position[j] = biasedRandom((double)maxPos);
 			}
 
 			//Initiate distFromPrey vector

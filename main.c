@@ -16,6 +16,7 @@
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
 #define H_MAX 1.0
+#define START_COUNTDOWN 1000
 
 void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
 
@@ -38,7 +39,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 
 	//Locate prey i.e., the best solution in the agents list
 	int prey,bestHyena,worstHyena;
-	
+
 	//The hunt begins..
 	printf("Iteration,Best Fitness,AVG Fitness,Worst Fitness,Prey Conflicts,Prey Total Color,Worst Conflicts,Worst Total Color\n");
 	for(int i=1;i<=maxItr;i++){
@@ -59,6 +60,12 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 				moveToCentroid(agents[j],circCentroid,agents[j].dimension);
 		}
 
+		/*
+		if(((double)rand())/RAND_MAX < exp(((-10.0)*i)/(double)maxItr)){
+			prey = worstHyena;
+		}
+		*/
+
 		//Encircle the prey
 		for(int j=0;j<numAgents;j++){
 			if(j!=prey && !belongsIn(j,clusterTable,NUM_AGENTS))
@@ -76,6 +83,7 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 		}
 		
 		h = H_MAX - (H_MAX*(((double)i)/maxItr));
+
 		//Empty the cluster for next iteration
 		for(int j=0;j<numVertices;j++){
 			circCentroid[j] = 0.0;
