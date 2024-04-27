@@ -3,7 +3,7 @@
 
 	//buildEdgeMatrix takes the file as input and builds the edge matrix corresponding to the graph.
 	//Make sure to read the first line of the file and then call this function.
-	void buildEdgeMatrix( FILE *file, int edges[][2], int *numEdges, int numVertices){
+	void buildOriginalEdgeMatrix( FILE *file, int edges[][2], int *numEdges, int numVertices){
 		int v1,v2;
 		int edgeIndex=0;
 		
@@ -33,10 +33,45 @@
 	}
 
 	//getGraphInfo gets the known chromatic number, number of vertices, number of edges and the edges information
-	void getGraphInfo( FILE *file, int *knownChromaticNum, int *numVertices, int *numEdges, int edges[][2]){
+	void getGraphInfo( FILE *file, int *knownChromaticNum, int *numVertices, int *numEdges, int *numCompEdges, int edges[][2], int compEdges[][2]){
+		//Build the original graph
 		fscanf(file,"%d %d %d",knownChromaticNum,numVertices,numEdges);
-		buildEdgeMatrix(file,edges,numEdges,*numVertices);
+		buildOriginalEdgeMatrix(file,edges,numEdges,*numVertices);
+
+		//Begin building the complement graph
+		bool presentCompEdges[*numVertices][*numVertices];
+
+		//Initiate the compADJ matrix with 1s except in the major diagonal i.e.,
+		//create the complete graph of order |V| x |V|
+		for(int i=0;i<*numVertices;i++){
+			for(int j=0;j<*numVertices;j++){
+				presentCompEdges[i][j] = (i!=j);
+			}
+		}
+
+		//For each edge present in the original graph delete that edge from
+		//the complete graph to get the complement.
+		for(int i=0;i<*numEdges;i++){
+			presentCompEdges[edges[i][0]][edges[i][1]] = false;
+		}
 		
+		//To get the edge matrix of the complement graph iterate through the upper half of the compADJ matrix
+		// and insert the edge wherever there is a 1 in the compADJ matrix
+		int compEdgeIndex = 0;
+
+		for(int i=0;i<*numVertices;i++){
+			for(int j=0;j<*numVertices;j++){
+				if(j>i && presentCompEdges[i][j]){
+					compEdges[compEdgeIndex][0] = i;
+					compEdges[compEdgeIndex][1] = j;
+					
+					compEdgeIndex++;
+				}
+			}
+		}
+
+		*numCompEdges = compEdgeIndex;
+
 		return ;
 	}
 

@@ -92,8 +92,21 @@
 		return totalColor;
 	}
 
+	//The fitness function needs to be contineous in most intervals so that the hyena pack can be guided towards the correct region.
+	//f(c,x1,x2, ... ,xn) := conflictWeight * (|E| - c) + colorWeight * (|V| + x_avg - min(x1,x2,...,xn))
+	//This new one is still not continuous as one of the dimension is descrete but it is better than the previous one as
+	// it takes n number of contineous arguments
 	double getFitness(Agent agent,int numVertices,int numEdges,double colorWeight,double conflictWeight){
-		double fitness = (colorWeight * (numVertices - agent.totalColor)) + (conflictWeight * (numEdges - agent.conflicts)) ;
+		double sumPos = 0.0;
+		double minPos = agent.position[0];
+
+		for(int dim=0;dim<agent.dimension;dim++){
+			sumPos += agent.position[dim];
+
+			minPos = min(minPos,agent.position[dim]);
+		}
+
+		double fitness = conflictWeight * (numEdges - agent.conflicts) + colorWeight * (numVertices - sumPos/agent.dimension + minPos);
 		return fitness;
 	}
 
