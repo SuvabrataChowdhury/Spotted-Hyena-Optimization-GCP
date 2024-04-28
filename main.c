@@ -10,19 +10,19 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 100000
+#define MAX_ITR 10000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.35
+#define COLOR_WEIGHT 0.25
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
-#define H_MAX 1.0
+#define H_MAX 5.0
 
-void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
+void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
 
 	//Initialize the agents
 	Agent agents[numAgents];
-	//getRandomAgents(agents,numAgents,numVertices,maxColor-1,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
-	getBiasedAgents(agents,numAgents,numVertices,maxColor-1,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
+	getRandomAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
+	//getBiasedAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
 	
 	//printAgents(agents,numAgents);
 
@@ -40,18 +40,22 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 	int prey,bestHyena,worstHyena;
 
 	//The hunt begins..
-	printf("Iteration,Best Fitness,AVG Fitness,Worst Fitness,Prey Conflicts,Prey Total Color,Worst Conflicts,Worst Total Color\n");
+	printf("Iteration,Best Fitness,C Val,T Val,Conflicts,Total Color\n");
 	for(int i=1;i<=maxItr;i++){
 		prey = locatePrey(agents,numAgents);
 		bestHyena = locateBestHyena(agents,numAgents,prey);
 		worstHyena = locateWorstHyena(agents,numAgents);
 
-		printf("%d,%lf,%lf,%lf,%d,%d,%d,%d\n",i,agents[prey].fitness,avgFitness,agents[worstHyena].fitness,agents[prey].conflicts,agents[prey].totalColor,agents[worstHyena].conflicts,agents[worstHyena].totalColor);
+		printf("%d,%lf,%lf,%lf,%d,%d\n",i,agents[prey].fitness,agents[prey].cVal,agents[prey].tVal,agents[prey].conflicts,agents[prey].totalColor);
 
+		/*
 		if(agents[prey].conflicts==0 && agents[prey].totalColor<=knownChromaticNum)
 			break;
+		*/
 
-		clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,maxColor-1,numVertices,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
+		//clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,numVertices,edges,numEdges,compEdges,numCompEdges,colorWeight,conflictWeight,maxPos);
+		clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,numVertices,edges,numEdges,compEdges,numCompEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,maxColor-1);
+		//clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,maxColor-1,numVertices,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
@@ -70,8 +74,12 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 			
 			if(j!=prey && !belongsIn(j,clusterTable,NUM_AGENTS)){
 				agents[j].conflicts = getConflicts(agents[j],edges,numEdges);
+				//Initiate totalColor
 				agents[j].totalColor = getTotalColor(agents[j]);
-				agents[j].fitness = getFitness(agents[j],numVertices,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
+				//Initiate fitness
+				agents[j].cVal = getCVal(agents[j],edges,numEdges,(double)maxColor-1);
+				agents[j].tVal = getTVal(agents[j],compEdges,numCompEdges,(double)maxColor-1);
+				agents[j].fitness = getFitness(agents[j],numEdges,numVertices,COLOR_WEIGHT,CONFLICT_WEIGHT);
 			}
 		}
 		
@@ -90,6 +98,13 @@ void SHO_GCP(int edges[][2],int numEdges,int numVertices,int maxItr,int numAgent
 		sdFitness = getSDFitness(agents,numAgents,avgFitness);
 	}
 
+	printf("\nThe best coloration obtained: \n");
+
+	for(int i=0;i<numVertices;i++){
+		printf("%lf ",agents[prey].position[i]);
+	}
+	printf("\n");
+
 	//solution = &agents[prey];
 }
 
@@ -102,7 +117,7 @@ void main(int argc, char *argv[]){
 	}
 	
 	//If the git repo is correctly cloned the graphs must be within the same directory.
-	char filePath[100]="GCP_DATASET/";
+	char filePath[100]="TEST_DATASET/";
 	strcat(filePath,argv[1]);	//Hence the relative file is "GCP_DATASET/"+argv[1]
 
 	FILE *file;
@@ -123,14 +138,16 @@ void main(int argc, char *argv[]){
 
 	fclose(file);
 
+	/*
 	printf("The original graph:\n");
 	displayGraph(edges,numEdges,numVertices,knownChromaticNum);
 	
 	printf("The complement graph:\n");
 	displayGraph(compEdges,numCompEdges,numVertices,knownChromaticNum);
+	*/
 
-	//Agent solution;
-	//SHO_GCP(edges,numEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum,knownChromaticNum,&solution);
+	Agent solution;
+	SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,numVertices,knownChromaticNum,&solution);
 
 	//printf("Obtained Solution:\n");
 	//printAgent(solution);

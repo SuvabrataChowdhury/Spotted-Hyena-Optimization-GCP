@@ -15,7 +15,10 @@
 		//Solution Information
 		int conflicts;
 		int totalColor;
-		double fitness; //fitness_i := (COLOR_WEIGHT * (num_vertices-total_color)) + (CONFLICT_WEIGHT * (num_edges-conflict))
+
+		double cVal;
+		double tVal;
+		double fitness; 
 	}Agent;
 
 	//As in a dimension where numbers are arranged in a circular way one can join two points with two vectors,
@@ -92,29 +95,52 @@
 		return totalColor;
 	}
 
-	//The fitness function needs to be contineous in most intervals so that the hyena pack can be guided towards the correct region.
-	//f(c,x1,x2, ... ,xn) := conflictWeight * (|E| - c) + colorWeight * (|V| + x_avg - min(x1,x2,...,xn))
-	//This new one is still not continuous as one of the dimension is descrete but it is better than the previous one as
-	// it takes n number of contineous arguments
-	double getFitness(Agent agent,int numVertices,int numEdges,double colorWeight,double conflictWeight){
-		double sumPos = 0.0;
-		double minPos = agent.position[0];
+	/*
+		The fitness function needs to be contineous in all intervals so that the hyena pack can be guided towards the correct region.
 
-		for(int dim=0;dim<agent.dimension;dim++){
-			sumPos += agent.position[dim];
+		We define the fitness function as the following,
+		f(vec x) = W_c * (|E| - c(vec x)) + T_c * (|V| - t(vec x)) ;
+		c(vec x) = sum for all edges in E ( 1 - |E[x1] - E[x2]|/n) ;
+		t(vec x) = sum for all edges in E' ( |E'[x1] - E'[x2]|/n ) ;
+		
+		where,
+		W_c is the weight given to conflicts reduction
+		T_c is the weight given to total color recuction
+		|E| is number of edges in G
+		|V| is number of veritces in G
+		G' is the complement graph of G
+		E' is the edge set of G'
+		n is the maximum position allowed in the solution space
+	*/
 
-			minPos = min(minPos,agent.position[dim]);
+	double getCVal(Agent agent,int edges[][2],int numEdges,double maxPos){
+		//Find the c value of the agent
+		double sumDist = 0.0;
+
+		for(int i=0;i<numEdges;i++){
+			sumDist = sumDist +  fabs(agent.position[edges[i][0]] - agent.position[edges[i][1]]);
 		}
 
-		double fitness = conflictWeight * (numEdges - agent.conflicts) + colorWeight * (numVertices - sumPos/agent.dimension + minPos);
-		return fitness;
+		return (sumDist/numEdges);
 	}
 
-	//The rest value defines how relax the hyena pack is.
-	//If the fitness difference between prey and the worst hyena is greated or the hunger bar
-	//is greater then the pack becomes restless and they focus on hunting.
-	double rest(double del,double hunger){
-		return del/hunger;
+	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
+		//Find the t value of the agent
+		double sumDist = 0.0;
+
+		for(int i=0;i<numCompEdges;i++){
+			sumDist = sumDist + fabs(agent.position[compEdges[i][0]] - agent.position[compEdges[i][1]]);
+		}
+		
+		return (sumDist/numCompEdges);
+	}
+
+	double getFitness(Agent agent,int numEdges,int numVertices,double colorWeight,double conflictWeight){
+
+		//return exp((-1.0)*agent.cVal)+tanh(agent.tVal);
+		//return (1/(1+exp(agent.tVal)))+tanh(agent.cVal);
+		//return conflictWeight * (numEdges - agent.cVal);
+		return conflictWeight * (agent.cVal-0.5) + colorWeight * (numVertices - agent.tVal);
 	}
 
 	//bound bounds the given variable with maxPos in such a way that if var goes out of the boundary then
@@ -147,7 +173,7 @@
 		}
 	}
 
-	void getBiasedAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
+	void getBiasedAgents(Agent agents[],int numAgents,int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int numVertices,int maxPos,double colorWeight,double conflictWeight){
 		int sign = 1;
 		
 		//For each agents do
@@ -169,12 +195,14 @@
 			//Initiate totalColor
 			agents[i].totalColor = getTotalColor(agents[i]);
 			//Initiate fitness
-			agents[i].fitness = getFitness(agents[i],numVertices,numEdges,colorWeight,conflictWeight);
+			agents[i].cVal = getCVal(agents[i],edges,numEdges,maxPos);
+			agents[i].tVal = getTVal(agents[i],compEdges,numCompEdges,maxPos);
+			agents[i].fitness = getFitness(agents[i],numEdges,numVertices,colorWeight,conflictWeight);
 		}
 	}
 
 	//Generates the initial configuration of agents
-	void getRandomAgents(Agent agents[],int numAgents,int numVertices,int maxPos,int edges[][2],int numEdges,double colorWeight,double conflictWeight){
+	void getRandomAgents(Agent agents[],int numAgents,int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int numVertices,int maxPos,double colorWeight,double conflictWeight){
 		for(int i=0;i<numAgents;i++){
 			//Set the dimension of each vector as number of vertices of the graph
 			agents[i].dimension = numVertices;
@@ -195,7 +223,9 @@
 			//Initiate totalColor
 			agents[i].totalColor = getTotalColor(agents[i]);
 			//Initiate fitness
-			agents[i].fitness = getFitness(agents[i],numVertices,numEdges,colorWeight,conflictWeight);
+			agents[i].cVal = getCVal(agents[i],edges,numEdges,maxPos);
+			agents[i].tVal = getTVal(agents[i],compEdges,numCompEdges,maxPos);
+			agents[i].fitness = getFitness(agents[i],numEdges,numVertices,colorWeight,conflictWeight);
 		}
 	}
 
@@ -477,7 +507,7 @@
 	}
 
 	//Cluster formation using nearest neighbours based on fitness on a toric world
-	int getCluster(Agent agents[], int numAgents, double circCentroid[], bool clusterTable[], int bestHyena, int worstHyena, int maxPos,int dimension, int edges[][2], int numEdges, double colorWeight, double conflictWeight){
+	int getCluster(Agent agents[], int numAgents, double circCentroid[], bool clusterTable[], int bestHyena, int worstHyena, int dimension, int edges[][2], int numEdges, int compEdges[][2], int numCompEdges, double colorWeight, double conflictWeight, int maxPos){
 
 		//Create a dummyHyena for the purpose of finding the gradient of the fitness function locally
 		Agent dummyHyena;
@@ -486,6 +516,8 @@
 		dummyHyena.position = (double *) calloc(dimension,sizeof(double));
 		//dummyHyena.distFromPrey = (double *) calloc(dimension,sizeof(double));
 
+		//agents[i].fitness = getFitness(agents[i],edges,numEdges,compEdges,numCompEdges,numVertices,colorWeight,conflictWeight,maxPos);
+
 		//To find the gradient first place the dummyHyena by translating the bestHyena with a very small factor( in range [0.5,1] )
 		for(int i=0;i<dimension;i++){
 			dummyHyena.position[i] = bound( (agents[bestHyena].position[i] + ((0.5*rand())/RAND_MAX) + 0.5) ,maxPos);
@@ -493,7 +525,11 @@
 
 		dummyHyena.conflicts = getConflicts(dummyHyena,edges,numEdges);
 		dummyHyena.totalColor = getTotalColor(dummyHyena);
-		dummyHyena.fitness = getFitness(dummyHyena,dimension,numEdges,colorWeight,conflictWeight);
+
+		//Initiate fitness
+		dummyHyena.cVal = getCVal(dummyHyena,edges,numEdges,maxPos);
+		dummyHyena.tVal = getTVal(dummyHyena,compEdges,numCompEdges,maxPos);
+		dummyHyena.fitness = getFitness(dummyHyena,numEdges,dimension,colorWeight,conflictWeight);
 		
 		//Add the best hyena in the cluster,
 		int clusterSize = 1;
@@ -502,7 +538,7 @@
 
 		//If gradient is positive then we might be near a maxima (either global or local)
 		//then explore that region
-		if(dummyHyena.fitness - agents[bestHyena].fitness > 0){
+		if(dummyHyena.fitness - agents[bestHyena].fitness > 0.0){
 			//replace the worst agent with dummyHyena
 			copyAgent(&dummyHyena,&agents[worstHyena]);
 
