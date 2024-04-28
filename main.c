@@ -15,14 +15,14 @@
 #define COLOR_WEIGHT 0.25
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
-#define H_MAX 5.0
+#define H_MAX 1.0
 
 void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
 
 	//Initialize the agents
 	Agent agents[numAgents];
-	getRandomAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
-	//getBiasedAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
+	//getRandomAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
+	getBiasedAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
 	
 	//printAgents(agents,numAgents);
 
@@ -40,22 +40,18 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 	int prey,bestHyena,worstHyena;
 
 	//The hunt begins..
-	printf("Iteration,Best Fitness,C Val,T Val,Conflicts,Total Color\n");
+	printf("Iteration,Best Fitness,C Val,T Val,Conflicts,Total Color,AVG fitness,SD fitness\n");
 	for(int i=1;i<=maxItr;i++){
 		prey = locatePrey(agents,numAgents);
 		bestHyena = locateBestHyena(agents,numAgents,prey);
 		worstHyena = locateWorstHyena(agents,numAgents);
 
-		printf("%d,%lf,%lf,%lf,%d,%d\n",i,agents[prey].fitness,agents[prey].cVal,agents[prey].tVal,agents[prey].conflicts,agents[prey].totalColor);
+		printf("%d,%lf,%lf,%lf,%d,%d,%lf,%lf\n",i,agents[prey].fitness,agents[prey].cVal,agents[prey].tVal,agents[prey].conflicts,agents[prey].totalColor,avgFitness,sdFitness);
 
-		/*
 		if(agents[prey].conflicts==0 && agents[prey].totalColor<=knownChromaticNum)
 			break;
-		*/
 
-		//clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,numVertices,edges,numEdges,compEdges,numCompEdges,colorWeight,conflictWeight,maxPos);
 		clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,numVertices,edges,numEdges,compEdges,numCompEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,maxColor-1);
-		//clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,maxColor-1,numVertices,edges,numEdges,COLOR_WEIGHT,CONFLICT_WEIGHT);
 
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
@@ -117,7 +113,8 @@ void main(int argc, char *argv[]){
 	}
 	
 	//If the git repo is correctly cloned the graphs must be within the same directory.
-	char filePath[100]="TEST_DATASET/";
+	//char filePath[100]="TEST_DATASET/";
+	char filePath[100]="GCP_DATASET/";
 	strcat(filePath,argv[1]);	//Hence the relative file is "GCP_DATASET/"+argv[1]
 
 	FILE *file;

@@ -115,32 +115,30 @@
 
 	double getCVal(Agent agent,int edges[][2],int numEdges,double maxPos){
 		//Find the c value of the agent
-		double sumDist = 0.0;
+		double expSumDist = 0.0;
 
 		for(int i=0;i<numEdges;i++){
-			sumDist = sumDist +  fabs(agent.position[edges[i][0]] - agent.position[edges[i][1]]);
+			expSumDist = expSumDist + (1.0-exp((-1.0)*pow(agent.position[edges[i][0]]-agent.position[edges[i][1]],2)));
 		}
 
-		return (sumDist/numEdges);
+		return expSumDist;
 	}
 
 	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
 		//Find the t value of the agent
-		double sumDist = 0.0;
+		double expSumDist = 0.0;
 
 		for(int i=0;i<numCompEdges;i++){
-			sumDist = sumDist + fabs(agent.position[compEdges[i][0]] - agent.position[compEdges[i][1]]);
+			expSumDist = expSumDist + exp((-1.0)*fabs(agent.position[compEdges[i][0]]-agent.position[compEdges[i][1]]));
 		}
-		
-		return (sumDist/numCompEdges);
+
+		return expSumDist;
 	}
 
 	double getFitness(Agent agent,int numEdges,int numVertices,double colorWeight,double conflictWeight){
 
-		//return exp((-1.0)*agent.cVal)+tanh(agent.tVal);
-		//return (1/(1+exp(agent.tVal)))+tanh(agent.cVal);
-		//return conflictWeight * (numEdges - agent.cVal);
-		return conflictWeight * (agent.cVal-0.5) + colorWeight * (numVertices - agent.tVal);
+		return conflictWeight * agent.cVal + colorWeight * agent.tVal;
+		//return conflictWeight * (numEdges - agent.cVal) + colorWeight * agent.tVal;
 	}
 
 	//bound bounds the given variable with maxPos in such a way that if var goes out of the boundary then
