@@ -155,7 +155,7 @@
 		
 	}
 */
-
+/*
 	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
 		//Find the t value of the agent
 		double sumPos = 0.0;
@@ -175,20 +175,43 @@
 
 		return (1-(sdPos/avgPos));
 	}
+*/
 
-
-	//cVal is avgDist between each components which needs to be increased to make 
-	//the coloration conflict free
-	double getCVal(Agent agent,int edges[][2],int numEdges,double maxPos){
-		//Find the c value of the agent
-		double sumDist = 0.0;
+	double findWeight(int dimension,Agent agent,int edges[][2],int numEdges){
+		int conEdgeCount = 0;
+		//double weight = 0.0;
 
 		for(int i=0;i<numEdges;i++){
-			sumDist += 1.0/fabs(agent.position[edges[i][0]]-agent.position[edges[i][1]]);
+			if((edges[i][0]==dimension || edges[i][1]==dimension) && getColor(agent.position[edges[i][0]])==getColor(agent.position[edges[i][1]])){
+				conEdgeCount++;
+				//weight = 2*(fabs(agent.position[edges[i][0]]-agent.position[edges[i][1]])/maxPos)-1;
+			}
 		}
 
-		return numEdges/sumDist;
+		return ((double)conEdgeCount)/numEdges;
 	}
+
+	double getCVal(Agent agent,int edges[][2],int numEdges,double maxPos){
+		double cVal = 0.0;
+
+		for(int i=0;i<agent.dimension;i++){
+			cVal = cVal + (1.0-findWeight(i,agent,edges,numEdges));
+		}
+
+		return cVal;
+	}
+
+	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
+		//Find the t value of the agent
+		double tVal = 0.0;
+
+		for(int i=0;i<agent.dimension;i++){
+			tVal = tVal + findWeight(i,agent,compEdges,numCompEdges);
+		}
+
+		return tVal;
+	}
+	
 /*
 	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
 		//Find the t value of the agent
