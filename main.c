@@ -10,7 +10,7 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 10000
+#define MAX_ITR 100000
 #define NUM_AGENTS 100
 #define COLOR_WEIGHT 0.25
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
@@ -48,8 +48,8 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 
 		printf("%d,%lf,%lf,%lf,%d,%d,%lf,%lf\n",i,agents[prey].fitness,agents[prey].cVal,agents[prey].tVal,agents[prey].conflicts,agents[prey].totalColor,avgFitness,sdFitness);
 
-		if(agents[prey].conflicts==0 && agents[prey].totalColor<=knownChromaticNum)
-			break;
+		//if(agents[prey].conflicts==0 && agents[prey].totalColor<=knownChromaticNum)
+			//break;
 
 		clusterSize = getCluster(agents,numAgents,circCentroid,clusterTable,bestHyena,worstHyena,numVertices,edges,numEdges,compEdges,numCompEdges,COLOR_WEIGHT,CONFLICT_WEIGHT,maxColor-1);
 
@@ -57,6 +57,10 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 		for(int j=0;j<numAgents;j++){
 			if(j!=prey && !belongsIn(j,clusterTable,NUM_AGENTS))
 				moveToCentroid(agents[j],circCentroid,agents[j].dimension);
+		}
+
+		if(((double)rand()/RAND_MAX) <= exp((-1.0)*i)){
+			prey = worstHyena;
 		}
 
 		//Encircle the prey
@@ -144,7 +148,8 @@ void main(int argc, char *argv[]){
 	*/
 
 	Agent solution;
-	SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,numVertices,knownChromaticNum,&solution);
+	//SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum+5,knownChromaticNum,&solution);
+	SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum,knownChromaticNum,&solution);
 
 	//printf("Obtained Solution:\n");
 	//printAgent(solution);

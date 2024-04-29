@@ -23,7 +23,7 @@
 
 	//As in a dimension where numbers are arranged in a circular way one can join two points with two vectors,
 	//one going in clockwise direction and another going in the anticlockwise direction, we need the CircDirection datatype
-	//to convay such motion
+	//to convey such motion
 	typedef enum CircDirection {CLOCK,ANTICLOCK} CircDirection;
 
 	void swap(int *num1, int *num2){
@@ -113,30 +113,101 @@
 		n is the maximum position allowed in the solution space
 	*/
 
+/*
 	double getCVal(Agent agent,int edges[][2],int numEdges,double maxPos){
 		//Find the c value of the agent
-		double expSumDist = 0.0;
+		double funcSumDist = 0.0;
 
-		for(int i=0;i<numEdges;i++){
-			expSumDist = expSumDist + (1.0-exp((-1.0)*pow(agent.position[edges[i][0]]-agent.position[edges[i][1]],2)));
+		double dist = 0.0;
+		
+		for(int i=0;i<agent.dimension;i++){
+			dist += pow(agent.position[i],2);
 		}
 
-		return expSumDist;
+		dist = sqrt(dist);
+
+		double x=0.0,y=0.0,distFromPlane=0.0;
+		for(int i=0;i<numEdges;i++){
+			x = agent.position[edges[i][0]];
+			y = agent.position[edges[i][1]];
+
+			distFromPlane = fabs(x-y)/dist;
+
+			funcSumDist = funcSumDist + (((1-distFromPlane)+fabs(1-distFromPlane))/2);
+		}
+
+		return funcSumDist;
 	}
+*/
+	
+/*
+	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
+		//Find the t value of the agent
+		double invReluSumDist = 0.0;
+
+		double diff = 0.0;
+		for(int i=0;i<numCompEdges;i++){
+			diff = agent.position[compEdges[i][0]]-agent.position[compEdges[i][1]];
+			invReluSumDist = invReluSumDist + (((1.0-diff)+fabs(1.0-diff))/2.0);
+		}
+
+		return invReluSumDist;
+		
+	}
+*/
 
 	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
 		//Find the t value of the agent
-		double expSumDist = 0.0;
+		double sumPos = 0.0;
 
-		for(int i=0;i<numCompEdges;i++){
-			expSumDist = expSumDist + exp((-1.0)*fabs(agent.position[compEdges[i][0]]-agent.position[compEdges[i][1]]));
+		for(int i=0;i<agent.dimension;i++){
+			sumPos = sumPos + agent.position[i];
 		}
 
-		return expSumDist;
+		double avgPos = sumPos/agent.dimension;
+		double sumSquaredDiff = 0.0;
+		
+		for(int i=0;i<agent.dimension;i++){
+			sumSquaredDiff = sumSquaredDiff + pow(agent.position[i]-avgPos,2);
+		}
+
+		double sdPos = sqrt(sumSquaredDiff/agent.dimension);
+
+		return (1-(sdPos/avgPos));
 	}
 
-	double getFitness(Agent agent,int numEdges,int numVertices,double colorWeight,double conflictWeight){
 
+	//cVal is avgDist between each components which needs to be increased to make 
+	//the coloration conflict free
+	double getCVal(Agent agent,int edges[][2],int numEdges,double maxPos){
+		//Find the c value of the agent
+		double sumDist = 0.0;
+
+		for(int i=0;i<numEdges;i++){
+			sumDist += 1.0/fabs(agent.position[edges[i][0]]-agent.position[edges[i][1]]);
+		}
+
+		return numEdges/sumDist;
+	}
+/*
+	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
+		//Find the t value of the agent
+		double sumDist = 0.0;
+
+		for(int i=0;i<numCompEdges;i++){
+			sumDist += 1.0/fabs(agent.position[compEdges[i][0]]-agent.position[compEdges[i][1]]);
+		}
+
+		return (maxPos - numCompEdges/sumDist);
+	}
+*/
+
+	double getFitness(Agent agent,int numEdges,int numVertices,double colorWeight,double conflictWeight){
+		//return colorWeight * agent.tVal;
+
+		//return conflictWeight * (numEdges - agent.cVal) + colorWeight * agent.tVal;
+		
+		//return conflictWeight * agent.cVal;
 		return conflictWeight * agent.cVal + colorWeight * agent.tVal;
 		//return conflictWeight * (numEdges - agent.cVal) + colorWeight * agent.tVal;
 	}
