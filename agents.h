@@ -125,6 +125,28 @@
 
 		return cVal;
 	}
+/*
+	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
+		//Find the t value of the agent
+		double expSumDist = 0.0;
+		double sumPos = 0.0;
+
+		for(int i=0;i<agent.dimension;i++){
+			sumPos = sumPos + agent.position[i];
+		}
+
+		double avgPos = sumPos/agent.dimension;
+		double sumSquaredDiff = 0.0;
+
+		for(int i=0;i<agent.dimension;i++){
+			sumSquaredDiff = sumSquaredDiff + pow(agent.position[i]-avgPos,2);
+		}
+
+		double sdPos = sqrt(sumSquaredDiff/agent.dimension);
+
+		return (1-(sdPos/avgPos));
+	}
+*/
 
 	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
 		//Find the t value of the agent
@@ -137,6 +159,7 @@
 		return tVal;
 	}
 	
+
 /*
 	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
 		//Find the t value of the agent
