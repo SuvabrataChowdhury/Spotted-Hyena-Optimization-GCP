@@ -12,7 +12,7 @@
 
 #define MAX_ITR 10000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.25
+#define COLOR_WEIGHT 0.1
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
 #define H_MAX 1.0
@@ -22,8 +22,8 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 
 	//Initialize the agents
 	Agent agents[numAgents];
-	getRandomAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
-	//getBiasedAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
+	//getRandomAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
+	getBiasedAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
 	
 	//printAgents(agents,numAgents);
 
@@ -187,7 +187,7 @@ void main(int argc, char *argv[]){
 	*/
 
 	Agent solution;
-	//SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum+5,knownChromaticNum,&solution);
+	//SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum+3,knownChromaticNum,&solution);
 	SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum,knownChromaticNum,&solution);
 
 	//printf("Obtained Solution:\n");

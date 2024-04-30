@@ -98,97 +98,22 @@
 	/*
 		The fitness function needs to be contineous in all intervals so that the hyena pack can be guided towards the correct region.
 
-		We define the fitness function as the following,
-		f(vec x) = W_c * (|E| - c(vec x)) + T_c * (|V| - t(vec x)) ;
-		c(vec x) = sum for all edges in E ( 1 - |E[x1] - E[x2]|/n) ;
-		t(vec x) = sum for all edges in E' ( |E'[x1] - E'[x2]|/n ) ;
-		
-		where,
-		W_c is the weight given to conflicts reduction
-		T_c is the weight given to total color recuction
-		|E| is number of edges in G
-		|V| is number of veritces in G
-		G' is the complement graph of G
-		E' is the edge set of G'
-		n is the maximum position allowed in the solution space
 	*/
-
-/*
-	double getCVal(Agent agent,int edges[][2],int numEdges,double maxPos){
-		//Find the c value of the agent
-		double funcSumDist = 0.0;
-
-		double dist = 0.0;
-		
-		for(int i=0;i<agent.dimension;i++){
-			dist += pow(agent.position[i],2);
-		}
-
-		dist = sqrt(dist);
-
-		double x=0.0,y=0.0,distFromPlane=0.0;
-		for(int i=0;i<numEdges;i++){
-			x = agent.position[edges[i][0]];
-			y = agent.position[edges[i][1]];
-
-			distFromPlane = fabs(x-y)/dist;
-
-			funcSumDist = funcSumDist + (((1-distFromPlane)+fabs(1-distFromPlane))/2);
-		}
-
-		return funcSumDist;
-	}
-*/
-	
-/*
-	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
-		//Find the t value of the agent
-		double invReluSumDist = 0.0;
-
-		double diff = 0.0;
-		for(int i=0;i<numCompEdges;i++){
-			diff = agent.position[compEdges[i][0]]-agent.position[compEdges[i][1]];
-			invReluSumDist = invReluSumDist + (((1.0-diff)+fabs(1.0-diff))/2.0);
-		}
-
-		return invReluSumDist;
-		
-	}
-*/
-/*
-	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
-		//Find the t value of the agent
-		double sumPos = 0.0;
-
-		for(int i=0;i<agent.dimension;i++){
-			sumPos = sumPos + agent.position[i];
-		}
-
-		double avgPos = sumPos/agent.dimension;
-		double sumSquaredDiff = 0.0;
-		
-		for(int i=0;i<agent.dimension;i++){
-			sumSquaredDiff = sumSquaredDiff + pow(agent.position[i]-avgPos,2);
-		}
-
-		double sdPos = sqrt(sumSquaredDiff/agent.dimension);
-
-		return (1-(sdPos/avgPos));
-	}
-*/
 
 	double findWeight(int dimension,Agent agent,int edges[][2],int numEdges){
 		int conEdgeCount = 0;
-		//double weight = 0.0;
-
+		int degCount = 0;
+		
 		for(int i=0;i<numEdges;i++){
-			if((edges[i][0]==dimension || edges[i][1]==dimension) && getColor(agent.position[edges[i][0]])==getColor(agent.position[edges[i][1]])){
-				conEdgeCount++;
-				//weight = 2*(fabs(agent.position[edges[i][0]]-agent.position[edges[i][1]])/maxPos)-1;
+			if(edges[i][0]==dimension || edges[i][1]==dimension){
+				degCount++;
+				
+				if(getColor(agent.position[edges[i][0]])==getColor(agent.position[edges[i][1]]))
+					conEdgeCount++;
 			}
 		}
 
-		return ((double)conEdgeCount)/numEdges;
+		return (degCount==0)?0:((double)conEdgeCount)/((double)degCount);
 	}
 
 	double getCVal(Agent agent,int edges[][2],int numEdges,double maxPos){
