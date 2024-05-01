@@ -67,10 +67,12 @@
 
 	int getMaxColor(double arr[],int len){
 		int max = getColor(arr[0]);
+		int color = 0;
 
 		for(int i=1;i<len;i++){
-			if(getColor(arr[i])>max)
-				max = getColor(arr[i]);
+			color = getColor(arr[i]);
+			if(color>max)
+				max = color;
 		}
 		
 		return max;
@@ -113,7 +115,7 @@
 			}
 		}
 
-		return (degCount==0)?0:((double)conEdgeCount)/((double)degCount);
+		return (degCount==0)?0.0:(conEdgeCount/((double)degCount));
 	}
 
 	double getCVal(Agent agent,int edges[][2],int numEdges,double maxPos){
@@ -147,7 +149,6 @@
 		return (1-(sdPos/avgPos));
 	}
 */
-
 	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
 		//Find the t value of the agent
 		double tVal = 0.0;
@@ -159,6 +160,13 @@
 		return tVal;
 	}
 	
+/*
+	//Dummy function..
+	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
+		//Find the t value of the agent
+		return 0.0;
+	}
+*/
 
 /*
 	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
@@ -181,8 +189,11 @@
 		//return conflictWeight * agent.cVal;
 		return conflictWeight * agent.cVal + colorWeight * agent.tVal;
 		//return conflictWeight * (numEdges - agent.cVal) + colorWeight * agent.tVal;
+		
+		//return conflictWeight * agent.cVal + colorWeight * (numVertices - agent.totalColor);
 	}
-
+	
+	/*
 	//bound bounds the given variable with maxPos in such a way that if var goes out of the boundary then
 	//it comes right back around from the other direction 
 	double bound(double var, double maxPos){
@@ -192,6 +203,16 @@
 		else{
 			return fmod(var,maxPos);
 		}
+	}
+	*/
+
+	double bound(double var, double maxPos){
+		if(var < 0)
+			return 0;
+		else if(var > maxPos)
+			return maxPos;
+		else
+			return var;
 	}
 	
 	//Generates a random value which is biased towards the start value.
@@ -214,7 +235,7 @@
 	}
 
 	void getBiasedAgents(Agent agents[],int numAgents,int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int numVertices,int maxPos,double colorWeight,double conflictWeight){
-		int sign = 1;
+		//int sign = 1;
 		
 		//For each agents do
 		for(int i=0;i<numAgents;i++){
@@ -224,9 +245,9 @@
 			//Position the agent biased towards the origin i.e., the worst possible choice
 			agents[i].position = (double*) calloc(numVertices,sizeof(double));
 			for(int j=0;j<agents[i].dimension;j++){
-				sign = (rand()%2 == 0) ? -1 : 1;
-				agents[i].position[j] = bound( ((double)maxPos/2.0) + sign * biasedRandom(0.0,(double)maxPos) , maxPos );
-				//agents[i].position[j] = biasedRandom(0.0,(double)maxPos);
+				//sign = (rand()%2 == 0) ? -1 : 1;
+				//agents[i].position[j] = bound( ((double)maxPos/2.0) + sign * biasedRandom(0.0,(double)maxPos) , maxPos );
+				agents[i].position[j] = biasedRandom(0.0,(double)maxPos);
 			}
 
 			//Get the solution related informations
@@ -309,6 +330,8 @@
 		
 		dest->conflicts = source->conflicts;
 		dest->totalColor = source->totalColor;
+		dest->cVal = source->cVal;
+		dest->tVal = source->tVal;
 		dest->fitness = source->fitness;
 	}
 
@@ -317,21 +340,7 @@
 			dest[i] = source[i];
 		}
 	}
-/*	
-	//Prey is the agent having maximum fitness
-	//BestHyena is the agent having second highest fitness
-	void locatePreyAndBestHyena(Agent agents[],int numAgents,int *prey,int *bestHyena){
-		*prey = 0;
-		*bestHyena = 0;
-		for(int i=1;i<numAgents;i++){
-			if(agents[i].fitness > agents[*prey].fitness)
-				*prey = i;
 
-			if(agents[i].fitness < agents[*prey].fitness && agents[i].fitness > agents[*bestHyena].fitness)
-				*bestHyena = i;
-		}
-	}
-*/
 	//Prey is the agent having maximum fitness
 	int locatePrey(Agent agents[],int numAgents){
 		int prey = 0;
@@ -343,17 +352,10 @@
 		return prey;
 	}
 
-	//Prey is the agent having maximum fitness
+	//Best hyena is the agent having second maximum fitness
 	int locateBestHyena(Agent agents[],int numAgents,int prey){
-		int bestHyena = 0;
+		int bestHyena = (prey==0)?1:0;
 		
-		for(int i=0;i<numAgents;i++){
-			if(i!=prey){
-				bestHyena = i;
-				break;
-			}
-		}
-
 		for(int i=0;i<numAgents;i++){
 			if(i!=prey && agents[i].fitness > agents[bestHyena].fitness)
 				bestHyena = i;
@@ -478,9 +480,6 @@
 	}
 */
 
-	//P_h(x+1) = P_p - E * D_h
-	//E = 2 * rd_2 * h - h
-	//rd_2 belongs to [0,1]
 	void encircle(Agent hyena, Agent prey, double h, double maxPos){
 		double randComponent = 0.0;
 		double randScaleComponent = 0.0;
@@ -489,9 +488,9 @@
 		for(int i=0;i<hyena.dimension;i++){
 			randComponent = (1.0*rand())/RAND_MAX;
 
-			distFromPrey = circDisplacement(hyena.position[i],bound(2 * randComponent * prey.position[i],maxPos),maxPos);
+			distFromPrey = fabs(2.0 * randComponent * prey.position[i] - hyena.position[i]);
 
-			randScaleComponent = (2.0*h*randComponent) - h;
+			randScaleComponent = (2.0 * h * randComponent) - h;
 
 			hyena.position[i] = bound(prey.position[i] - (randScaleComponent * distFromPrey) ,maxPos);
 		}
@@ -518,7 +517,7 @@
 		return item<tableLength && table[item];
 	}
 
-
+/*
 	//Finds the toroidal center component in the given dimension with the given list of vectors.
 	//This center is chosen to be the center of the arc consisting of the most increasing regions of
 	//the fitness function.
@@ -554,13 +553,12 @@
 
 		dummyHyena.dimension = dimension;
 		dummyHyena.position = (double *) calloc(dimension,sizeof(double));
-		//dummyHyena.distFromPrey = (double *) calloc(dimension,sizeof(double));
 
-		//agents[i].fitness = getFitness(agents[i],edges,numEdges,compEdges,numCompEdges,numVertices,colorWeight,conflictWeight,maxPos);
-
-		//To find the gradient first place the dummyHyena by translating the bestHyena with a very small factor( in range [0.5,1] )
+		//To find the gradient, first translate the dummyHyena from bestHyena with a very small factor( in range [0.5,1] )
+		int sign = 1;
 		for(int i=0;i<dimension;i++){
-			dummyHyena.position[i] = bound( (agents[bestHyena].position[i] + ((0.5*rand())/RAND_MAX) + 0.5) ,maxPos);
+			sign = (rand()%2==0)?-1:1;
+			dummyHyena.position[i] = bound( (agents[bestHyena].position[i] + sign * (((0.5*rand())/RAND_MAX) + 0.5)) ,maxPos);
 		}
 
 		dummyHyena.conflicts = getConflicts(dummyHyena,edges,numEdges);
@@ -633,6 +631,47 @@
 			for(int i=0;i<dimension;i++){
 				circCentroid[i] = toricCenter(agents,numAgents,bestAgents,clusterSize,maxPos,i);
 			}
+		}
+
+		return clusterSize;
+	}
+*/
+	int getCluster(Agent agents[], int numAgents, int prey, int worstHyena, int edges[][2], int numEdges, int compEdges[][2], int numCompEdges, double centroid[], int maxPos, double colorWeight, double conflictWeight){
+		Agent dummyAgent;
+
+		dummyAgent.dimension = agents[prey].dimension;
+		dummyAgent.position = (double *) calloc(agents[prey].dimension,sizeof(double));
+
+		//To find the gradient, first translate the dummyHyena from bestHyena with a very small factor( in range [0.5,1] )
+		int sign = 1;
+		for(int i=0;i<agents[prey].dimension;i++){
+			sign = (rand()%2==0)?-1:1;
+			dummyAgent.position[i] = bound( (agents[prey].position[i] + sign * (((0.5*rand())/RAND_MAX) + 0.5)) ,maxPos);
+		}
+
+		dummyAgent.conflicts = getConflicts(dummyAgent,edges,numEdges);
+		dummyAgent.totalColor = getTotalColor(dummyAgent);
+
+		//Initiate fitness
+		dummyAgent.cVal = getCVal(dummyAgent,edges,numEdges,maxPos);
+		dummyAgent.tVal = getTVal(dummyAgent,compEdges,numCompEdges,maxPos);
+		dummyAgent.fitness = getFitness(dummyAgent,numEdges,agents[prey].dimension,colorWeight,conflictWeight);
+
+		int clusterSize = 2;
+		addVectors(centroid,agents[prey].position,agents[prey].dimension);
+		addVectors(centroid,dummyAgent.position,agents[prey].dimension);
+		
+		double minFitness = min(agents[prey].fitness,dummyAgent.fitness);
+		double maxFitness = max(agents[prey].fitness,dummyAgent.fitness);
+		for(int i=0;i<numAgents;i++){
+			if(agents[i].fitness>minFitness && agents[i].fitness<maxFitness){
+				clusterSize++;
+				addVectors(centroid,agents[i].position,agents[i].dimension);
+			}
+		}
+
+		for(int i=0;i<agents[prey].dimension;i++){
+			centroid[i] = centroid[i]/clusterSize;
 		}
 
 		return clusterSize;
