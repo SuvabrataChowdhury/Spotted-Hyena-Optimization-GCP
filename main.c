@@ -10,12 +10,12 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 100000
+#define MAX_ITR 50000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.35
+#define COLOR_WEIGHT 0.1
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
-#define H_MAX 5.0
+#define H_MAX 1.0
 #define START_COUNTDOWN 1000
 
 clock_t start,end;
@@ -42,31 +42,55 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 
 	double avgFitness = 0.0;
 
+	int countDown = START_COUNTDOWN;
+	bool improved = false;
+	double prePreyFitness = -INF;
+
 	//The hunt begins..
-	printf("Iteration,Best Fitness,C Val,T Val,Conflicts,Total Color,AVG fitness,SD fitness\n");
+	printf("Iteration,Best Fitness,C Val,T Val,Conflicts,Total Color,AVG fitness,Cluster Size\n");
 	for(int i=1;i<=maxItr;i++){
 		prey = locatePrey(agents,numAgents);
 		worstHyena = locateWorstHyena(agents,numAgents);
 
 		avgFitness = getAvgFitness(agents,numAgents);
 
-		printf("%d,%lf,%lf,%lf,%d,%d,%lf\n",i,agents[prey].fitness,agents[prey].cVal,agents[prey].tVal,agents[prey].conflicts,agents[prey].totalColor,avgFitness);
+		printf("%d,%lf,%lf,%lf,%d,%d,%lf,%d\n",i,agents[prey].fitness,agents[prey].cVal,agents[prey].tVal,agents[prey].conflicts,agents[prey].totalColor,avgFitness,clusterSize);
 
 		if(((int)agents[prey].cVal)==numVertices && agents[prey].totalColor<=knownChromaticNum)
 			break; //Solution found
 
-		clusterSize = getCluster(agents,numAgents,prey,worstHyena,edges,numEdges,compEdges,numCompEdges,centroid,(double)(maxColor-1),COLOR_WEIGHT,CONFLICT_WEIGHT);
-		
-		//Chase the prey
-		for(int j=0;j<numAgents;j++){
-			if(j!=prey)
-				moveToCentroid(agents[j],centroid,agents[j].dimension);
-		}
+		improved = (agents[prey].fitness>prePreyFitness);
+		countDown = (improved)?START_COUNTDOWN:countDown-1;
 
-		//Encircle the prey
-		for(int j=0;j<numAgents;j++){
-			if(j!=prey)
-				encircle(agents[j],agents[prey],h,maxColor-1);
+		prePreyFitness = agents[prey].fitness;
+
+		if(countDown==0 && !improved){
+			printf("RE SEARCH!!\n");
+
+			for(int j=0;j<numAgents;j++){
+				if(j!=prey){
+					for(int dim=0;dim<numVertices;dim++)
+						agents[j].position[dim] = ((double)maxColor-1.0) * (((double)rand())/RAND_MAX);
+				}
+			}
+
+			countDown = START_COUNTDOWN;
+		}
+		else{
+			clusterSize = getCluster(agents,numAgents,prey,worstHyena,edges,numEdges,compEdges,numCompEdges,centroid,(double)(maxColor-1),COLOR_WEIGHT,CONFLICT_WEIGHT);
+			
+			//Chase the prey
+			for(int j=0;j<numAgents;j++){
+				if(j!=prey)
+					moveToCentroid(agents[j],centroid,agents[j].dimension);
+			}
+
+			//Encircle the prey
+			for(int j=0;j<numAgents;j++){
+				if(j!=prey)
+					encircle(agents[j],agents[prey],h,maxColor-1);
+			}
+
 		}
 		
 		//Update fitness of all agents
@@ -129,8 +153,8 @@ void main(int argc, char *argv[]){
 	fclose(file);
 
 	Agent solution;
-	SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,numVertices,knownChromaticNum,&solution);
-	//SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum,knownChromaticNum,&solution);
+	//SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,numVertices,knownChromaticNum,&solution);
+	SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum,knownChromaticNum,&solution);
 
 	//printf("Obtained Solution:\n");
 	//printAgent(solution);

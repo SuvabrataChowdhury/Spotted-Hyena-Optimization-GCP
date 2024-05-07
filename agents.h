@@ -187,6 +187,9 @@
 		//return conflictWeight * (numEdges - agent.cVal) + colorWeight * agent.tVal;
 		
 		//return conflictWeight * agent.cVal;
+		
+		//return conflictWeight * (numEdges - agent.conflicts) + colorWeight * (numVertices - agent.totalColor);
+
 		return conflictWeight * agent.cVal + colorWeight * agent.tVal;
 		//return conflictWeight * (numEdges - agent.cVal) + colorWeight * agent.tVal;
 		
@@ -214,7 +217,14 @@
 		else
 			return var;
 	}
-	
+
+	double biasedRandom(double low,double high){
+		double random = ((double)rand())/RAND_MAX;
+
+		return (high-low)*(1-sqrt(random))+low;
+	}
+
+	/*
 	//Generates a random value which is biased towards the start value.
 	//The probability density function used is a exponential decay function which is,
 	//	y = e^(10x/n) [only the half in 1st quadrant]
@@ -224,13 +234,14 @@
 
 		return (-high/10.0)*log(exp(-10)*(1-random)+random*exp(-10*low/high));
 	}
+	*/
 	
-	void biasedTranslate(Agent agent,Agent worstHyena,double maxPos){
+	void biasedTranslate(Agent agent,Agent fromAgent,double maxPos){
 		int sign = 1;
 
 		for(int i=0;i<agent.dimension;i++){
 			sign = (rand()%2 == 0) ? -1 : 1;
-			agent.position[i] = bound(worstHyena.position[i] + sign*biasedRandom(0.0,(double)maxPos),(double)maxPos);
+			agent.position[i] = bound(fromAgent.position[i] + sign*biasedRandom(0.0,maxPos),maxPos);
 		}
 	}
 
