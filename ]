@@ -25,8 +25,8 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 
 	//Initialize the agents
 	Agent agents[numAgents];
-	//getRandomAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
-	getBiasedAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
+	getRandomAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
+	//getBiasedAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
 	
 	//printAgents(agents,numAgents);
 
@@ -60,8 +60,8 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 		//Chase the prey
 		for(int j=0;j<numAgents;j++){
 			if(j!=prey){
-				moveToCentroid(agents[j],centroid,agents[j].dimension,(double)maxColor-1.0);
-				//moveToCentroid(agents[j],centroid,agents[j].dimension);
+				//moveToCentroid(agents[j],centroid,agents[j].dimension,(double)maxColor-1.0);
+				moveToCentroid(agents[j],centroid,agents[j].dimension);
 			}
 		}
 

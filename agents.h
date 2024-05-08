@@ -148,7 +148,9 @@
 
 		return (1-(sdPos/avgPos));
 	}
+
 */
+
 	double getTVal(Agent agent,int compEdges[][2],int numCompEdges,double maxPos){
 		//Find the t value of the agent
 		double tVal = 0.0;
@@ -217,14 +219,16 @@
 		else
 			return var;
 	}
-
+	
+	/*
 	double biasedRandom(double low,double high){
 		double random = ((double)rand())/RAND_MAX;
 
 		return (high-low)*(1-sqrt(random))+low;
 	}
+	*/
 
-	/*
+	
 	//Generates a random value which is biased towards the start value.
 	//The probability density function used is a exponential decay function which is,
 	//	y = e^(10x/n) [only the half in 1st quadrant]
@@ -234,7 +238,7 @@
 
 		return (-high/10.0)*log(exp(-10)*(1-random)+random*exp(-10*low/high));
 	}
-	*/
+	
 	
 	void biasedTranslate(Agent agent,Agent fromAgent,double maxPos){
 		int sign = 1;
@@ -392,12 +396,20 @@
 		}
 	}
 	
+
+	void moveToCentroid(Agent agent,double centroid[],int numDimension, double maxPos){
+		for(int i=0;i<numDimension;i++){
+			agent.position[i] = bound(centroid[i] + biasedRandom(0.0,1.0) , maxPos);
+		}
+	}
+
+/*
 	void moveToCentroid(Agent agent,double centroid[],int numDimension){
 		for(int i=0;i<numDimension;i++){
 			agent.position[i] = centroid[i];
 		}
 	}
-
+*/
 /*
 	void moveToCentroid(Agent agent,double vec[],int len,double scaleFactor){
 		for(int i=0;i<len;i++){
@@ -490,7 +502,7 @@
 		}
 	}
 */
-
+/*
 	void encircle(Agent hyena, Agent prey, double h, double maxPos){
 		double randComponent = 0.0;
 		double randScaleComponent = 0.0;
@@ -502,6 +514,20 @@
 			distFromPrey = fabs(2.0 * randComponent * prey.position[i] - hyena.position[i]);
 
 			randScaleComponent = (2.0 * h * randComponent) - h;
+
+			hyena.position[i] = bound(prey.position[i] - (randScaleComponent * distFromPrey) ,maxPos);
+		}
+	}
+*/
+
+	void encircle(Agent hyena, Agent prey, double h, double maxPos){
+		double randScaleComponent = 0.0;
+		double distFromPrey = 0.0;
+
+		for(int i=0;i<hyena.dimension;i++){
+			distFromPrey = fabs( ((2.0*rand())/RAND_MAX) * prey.position[i] - hyena.position[i]);
+
+			randScaleComponent = (h * ((2.0*rand())/RAND_MAX)) - h;
 
 			hyena.position[i] = bound(prey.position[i] - (randScaleComponent * distFromPrey) ,maxPos);
 		}
