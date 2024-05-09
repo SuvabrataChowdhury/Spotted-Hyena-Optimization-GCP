@@ -396,21 +396,21 @@
 		}
 	}
 	
-/*
+
 	void moveToCentroid(Agent agent,double centroid[],int numDimension, double maxPos){
 		for(int i=0;i<numDimension;i++){
 			agent.position[i] = bound(centroid[i] + biasedRandom(0.0,1.0) , maxPos);
 		}
 	}
 
-*/
 
+/*
 	void moveToCentroid(Agent agent,double centroid[],int numDimension){
 		for(int i=0;i<numDimension;i++){
 			agent.position[i] = centroid[i];
 		}
 	}
-
+*/
 /*
 	void moveToCentroid(Agent agent,double vec[],int len,double scaleFactor){
 		for(int i=0;i<len;i++){
@@ -680,7 +680,7 @@
 		return clusterSize;
 	}
 */
-	int getCluster(Agent agents[], int numAgents, int prey, int worstHyena, int edges[][2], int numEdges, int compEdges[][2], int numCompEdges, double centroid[], int maxPos, double colorWeight, double conflictWeight){
+	int getCluster(Agent agents[], int numAgents, int prey, int worstHyena, int edges[][2], int numEdges, int compEdges[][2], int numCompEdges, double centroid[], int maxPos, double colorWeight, double conflictWeight, int maxClusterSize){
 		Agent dummyAgent;
 
 		dummyAgent.dimension = agents[prey].dimension;
@@ -691,6 +691,7 @@
 		for(int i=0;i<agents[prey].dimension;i++){
 			sign = (rand()%2==0)?-1:1;
 			dummyAgent.position[i] = bound( (agents[prey].position[i] + sign * (((0.5*rand())/RAND_MAX) + 0.5)) ,maxPos);
+			//dummyAgent.position[i] = bound( (agents[prey].position[i] + (((0.5*rand())/RAND_MAX) + 0.5)) ,maxPos);
 		}
 
 		dummyAgent.conflicts = getConflicts(dummyAgent,edges,numEdges);
@@ -724,12 +725,13 @@
 							break;
 					}
 
-					lastAgent = (lastAgent==14)? lastAgent : lastAgent+1;
+					lastAgent = (lastAgent==maxClusterSize-1)? lastAgent : lastAgent+1;
 				}
 			}
 		}
 		
 		if(lastAgent==0){
+			//printf("Prey gets in cluster\n");
 			clusterSize = 2;
 
 			addVectors(centroid,agents[prey].position,agents[prey].dimension);
@@ -741,7 +743,7 @@
 			}
 		}
 		else{
-			lastAgent = (lastAgent==14 && topAgents[lastAgent]!=worstHyena)?lastAgent:lastAgent-1;
+			lastAgent = (lastAgent==maxClusterSize-1 && topAgents[lastAgent]!=worstHyena)?lastAgent:lastAgent-1;
 			for(int i=0;i<=lastAgent;i++){
 				addVectors(centroid,agents[topAgents[i]].position,agents[prey].dimension);
 			}
