@@ -220,15 +220,15 @@
 			return var;
 	}
 	
-	/*
+	
 	double biasedRandom(double low,double high){
 		double random = ((double)rand())/RAND_MAX;
 
 		return (high-low)*(1-sqrt(random))+low;
 	}
-	*/
-
 	
+
+	/*
 	//Generates a random value which is biased towards the start value.
 	//The probability density function used is a exponential decay function which is,
 	//	y = e^(10x/n) [only the half in 1st quadrant]
@@ -238,7 +238,7 @@
 
 		return (-high/10.0)*log(exp(-10)*(1-random)+random*exp(-10*low/high));
 	}
-	
+	*/
 	
 	void biasedTranslate(Agent agent,Agent fromAgent,double maxPos){
 		int sign = 1;
@@ -680,6 +680,7 @@
 		return clusterSize;
 	}
 */
+/*
 	int getCluster(Agent agents[], int numAgents, int prey, int worstHyena, int edges[][2], int numEdges, int compEdges[][2], int numCompEdges, double centroid[], int maxPos, double colorWeight, double conflictWeight, int maxClusterSize){
 		Agent dummyAgent;
 
@@ -702,6 +703,59 @@
 		dummyAgent.tVal = getTVal(dummyAgent,compEdges,numCompEdges,maxPos);
 		dummyAgent.fitness = getFitness(dummyAgent,numEdges,agents[prey].dimension,colorWeight,conflictWeight);
 
+		//printf("Range is %lf - %lf\n",agents[prey].fitness,dummyAgent.fitness);
+
+		int clusterSize = 1;
+		int lastAgent = 1;
+
+		int *topAgents = (int *)calloc(numAgents,sizeof(int));
+
+		for(int i=0;i<numAgents;i++){
+			topAgents[i] = worstHyena;
+		}
+
+		double minFitness = min(agents[prey].fitness,dummyAgent.fitness);
+		double maxFitness = max(agents[prey].fitness,dummyAgent.fitness);
+		
+		if(agents[prey].fitness<dummyAgent.fitness){
+			copyAgent(&dummyAgent,&agents[prey]);
+			printf("Prey got REPLACED!!\n");
+		}
+		
+		topAgents[0] = prey;
+
+		for(int i=0;i<numAgents;i++){
+			if(agents[i].fitness>minFitness && agents[i].fitness<maxFitness && agents[topAgents[lastAgent]].fitness<agents[i].fitness){
+				topAgents[lastAgent] = i;
+
+				for(int j=lastAgent;j>0;j--){
+					if(agents[topAgents[j]].fitness > agents[topAgents[j-1]].fitness)
+						swap(&topAgents[j],&topAgents[j-1]);
+					else
+						break;
+				}
+
+				clusterSize = (lastAgent==maxClusterSize-1)? clusterSize : clusterSize+1;
+
+				lastAgent = (lastAgent==maxClusterSize-1)? lastAgent : lastAgent+1;
+			}
+		}
+
+		lastAgent = (lastAgent==maxClusterSize-1 && topAgents[lastAgent]!=worstHyena)?lastAgent:lastAgent-1;
+		for(int i=0;i<=lastAgent;i++){
+			addVectors(centroid,agents[topAgents[i]].position,agents[prey].dimension);
+		}
+
+		clusterSize = lastAgent + 1;
+
+		for(int i=0;i<agents[prey].dimension;i++){
+			centroid[i] = centroid[i]/clusterSize;
+		}
+
+		return clusterSize;
+	}
+*/
+	int getCluster(Agent agents[], int numAgents, int prey, int worstHyena, int edges[][2], int numEdges, int compEdges[][2], int numCompEdges, double centroid[], int maxPos, double colorWeight, double conflictWeight, int maxClusterSize){
 		int clusterSize = 0;
 		int lastAgent = 0;
 
@@ -711,45 +765,29 @@
 			topAgents[i] = worstHyena;
 		}
 		
-		double minFitness = min(agents[prey].fitness,dummyAgent.fitness);
-		double maxFitness = max(agents[prey].fitness,dummyAgent.fitness);
 		for(int i=0;i<numAgents;i++){
-			if(agents[i].fitness>minFitness && agents[i].fitness<maxFitness){
-				if(agents[topAgents[lastAgent]].fitness<agents[i].fitness){
-					topAgents[lastAgent] = i;
+			if(agents[topAgents[lastAgent]].fitness<agents[i].fitness){
+				topAgents[lastAgent] = i;
 
-					for(int j=lastAgent;j>0;j--){
-						if(agents[topAgents[j]].fitness > agents[topAgents[j-1]].fitness)
-							swap(&topAgents[j],&topAgents[j-1]);
-						else
-							break;
-					}
-
-					lastAgent = (lastAgent==maxClusterSize-1)? lastAgent : lastAgent+1;
+				for(int j=lastAgent;j>0;j--){
+					if(agents[topAgents[j]].fitness > agents[topAgents[j-1]].fitness)
+						swap(&topAgents[j],&topAgents[j-1]);
+					else
+						break;
 				}
-			}
-		}
-		
-		if(lastAgent==0){
-			//printf("Prey gets in cluster\n");
-			clusterSize = 2;
 
-			addVectors(centroid,agents[prey].position,agents[prey].dimension);
-			addVectors(centroid,dummyAgent.position,agents[prey].dimension);
-			
-			if(agents[prey].fitness<dummyAgent.fitness){
-				copyAgent(&dummyAgent,&agents[prey]);
-				printf("Prey got REPLACED!!\n");
-			}
-		}
-		else{
-			lastAgent = (lastAgent==maxClusterSize-1 && topAgents[lastAgent]!=worstHyena)?lastAgent:lastAgent-1;
-			for(int i=0;i<=lastAgent;i++){
-				addVectors(centroid,agents[topAgents[i]].position,agents[prey].dimension);
-			}
+				clusterSize = (lastAgent==maxClusterSize-1)? clusterSize : clusterSize+1;
 
-			clusterSize = lastAgent + 1;
+				lastAgent = (lastAgent==maxClusterSize-1)? lastAgent : lastAgent+1;
+			}
 		}
+
+		lastAgent = (lastAgent==maxClusterSize-1 && topAgents[lastAgent]!=worstHyena)?lastAgent:lastAgent-1;
+		for(int i=0;i<=lastAgent;i++){
+			addVectors(centroid,agents[topAgents[i]].position,agents[prey].dimension);
+		}
+
+		clusterSize = lastAgent + 1;
 
 		for(int i=0;i<agents[prey].dimension;i++){
 			centroid[i] = centroid[i]/clusterSize;

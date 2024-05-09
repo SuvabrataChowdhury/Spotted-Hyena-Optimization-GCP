@@ -16,7 +16,7 @@
 #define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
 
 #define H_MAX 5.0
-#define START_COUNTDOWN (MAX_ITR/10)
+#define START_COUNTDOWN 1000
 #define MIN_CLUSTER_SIZE 3
 
 clock_t start,end;
@@ -47,6 +47,7 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 	
 	bool improved = false;
 	int countDown = START_COUNTDOWN;
+	int startCountDown = START_COUNTDOWN;
 	double prePreyFitness = -INF;
 
 	int startItr = 0;
@@ -63,7 +64,24 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 
 		if(((int)agents[prey].cVal)==numVertices && agents[prey].totalColor<=knownChromaticNum)
 			break; //Solution found
+/*
+		improved = (agents[prey].fitness>prePreyFitness);
+		countDown = (improved) ? START_COUNTDOWN : countDown-1;
 
+		prePreyFitness = agents[prey].fitness;
+
+		if(countDown==0 && !improved){
+			startCountDown += START_COUNTDOWN;
+
+			for(int j=0;j<numAgents;j++){
+				if(j!=prey)
+					biasedTranslate(agents[j],agents[prey],(double)maxColor-1.0);
+			}
+
+			countDown = startCountDown;
+		}
+		else{
+*/			
 		maxClusterSize = numAgents + (MIN_CLUSTER_SIZE - numAgents) * (((double)i)/maxItr);
 
 		clusterSize = getCluster(agents,numAgents,prey,worstHyena,edges,numEdges,compEdges,numCompEdges,centroid,(double)(maxColor-1),COLOR_WEIGHT,CONFLICT_WEIGHT,maxClusterSize);
@@ -75,25 +93,15 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 				//moveToCentroid(agents[j],centroid,agents[j].dimension);
 			}
 		}
-/*
-		improved = (agents[prey].fitness>prePreyFitness);
-		countDown = (improved) ? START_COUNTDOWN : countDown-1;
 
-		if(countDown==0 && !improved){
-			startItr = i;
-
-			countDown = START_COUNTDOWN;
-		}
-*/
 		h = H_MAX - ((H_MAX * (i-startItr))/(maxItr-startItr));
-
-		prePreyFitness = agents[prey].fitness;
 
 		//Encircle the prey
 		for(int j=0;j<numAgents;j++){
 			if(j!=prey)
 				encircle(agents[j],agents[prey],h,(double)maxColor-1.0);
 		}
+		//}
 		
 		//Update fitness of all agents
 		for(int j=0;j<numAgents;j++){
@@ -105,7 +113,6 @@ void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int
 			agents[j].tVal = getTVal(agents[j],compEdges,numCompEdges,(double)maxColor-1);
 			agents[j].fitness = getFitness(agents[j],numEdges,numVertices,COLOR_WEIGHT,CONFLICT_WEIGHT);
 		}
-
 	}
 	
 	end = clock();
@@ -153,6 +160,7 @@ void main(int argc, char *argv[]){
 	fclose(file);
 
 	Agent solution;
+	//SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,100,knownChromaticNum,&solution);
 	SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,numVertices,knownChromaticNum,&solution);
 	//SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum,knownChromaticNum,&solution);
 
