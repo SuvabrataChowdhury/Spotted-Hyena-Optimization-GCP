@@ -763,10 +763,11 @@
 
 		for(int i=0;i<numAgents;i++){
 			topAgents[i] = worstHyena;
+			//topAgents[i] = prey;
 		}
 		
 		for(int i=0;i<numAgents;i++){
-			if(agents[topAgents[lastAgent]].fitness<agents[i].fitness){
+			if(agents[topAgents[lastAgent]].fitness < agents[i].fitness){
 				topAgents[lastAgent] = i;
 
 				for(int j=lastAgent;j>0;j--){
@@ -785,6 +786,8 @@
 		lastAgent = (lastAgent==maxClusterSize-1 && topAgents[lastAgent]!=worstHyena)?lastAgent:lastAgent-1;
 		for(int i=0;i<=lastAgent;i++){
 			addVectors(centroid,agents[topAgents[i]].position,agents[prey].dimension);
+			
+			//clusterTable[topAgents[i]] = true;
 		}
 
 		clusterSize = lastAgent + 1;
