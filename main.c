@@ -10,133 +10,31 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 10000
-#define NUM_AGENTS 100
-#define COLOR_WEIGHT 1.0
-#define CONFLICT_WEIGHT 3.0
-//#define CONFLICT_WEIGHT (1-COLOR_WEIGHT)
+#define MAX_ITR 1
+#define NUM_AGENTS 10
+#define COLOR_WEIGHT 0.25
+#define CONFLICT_WEIGHT 0.75
 
-#define H_MAX 1.0
-#define START_COUNTDOWN 1000
-#define MIN_CLUSTER_SIZE 3
-
-#define CHANGE_PROB 0.30
+#define H_MAX 2.0
 
 clock_t start,end;
 
-void SHO_GCP(int edges[][2],int numEdges,int compEdges[][2],int numCompEdges,int numVertices,int maxItr,int numAgents,int maxColor,int knownChromaticNum,Agent* solution){
+void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double colorWeight,int maxPos){
+	//Start Timer
 	start = clock();
 
-	//Initialize the agents
-	Agent agents[numAgents];
-	getRandomAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
-	//getBiasedAgents(agents,numAgents,edges,numEdges,compEdges,numCompEdges,numVertices,(double)maxColor-1.0,COLOR_WEIGHT,CONFLICT_WEIGHT);
+	//Main block of algorithm
+	//Initialization phase
+	Agent preHuntAgents[numAgents];
+	Agent postHuntAgents[numAgents];
+
+	getRandomAgents(graph,preHuntAgents,numAgents,maxPos-1,conflictWeight,colorWeight);
+	displayAgents(preHuntAgents,numAgents);
 	
-	//printAgents(agents,numAgents);
-
-	//Initialize the cluster as a null vector in the nth dimension
-	double *centroid = (double *)calloc(numVertices,sizeof(double));
-
-	//Initiate vector h
-	double h = H_MAX;
-
-	int clusterSize = 0;
-	int maxClusterSize = numAgents;
-
-	//Locate prey i.e., the best solution in the agents list
-	int prey,worstHyena;
-
-	double avgFitness = 0.0;
-	
-	bool improved = false;
-	int countDown = START_COUNTDOWN;
-	int startCountDown = START_COUNTDOWN;
-	double prePreyFitness = -INF;
-
-	int startItr = 0;
-
-	//The hunt begins..
-	printf("Iteration,Best Fitness,C Val,T Val,Conflicts,Total Color,AVG fitness,Cluster Size\n");
-	for(int i=0;i<=maxItr;i++){
-		prey = locatePrey(agents,numAgents);
-		worstHyena = locateWorstHyena(agents,numAgents);
-
-		avgFitness = getAvgFitness(agents,numAgents);
-
-		printf("%d,%lf,%lf,%lf,%d,%d,%lf,%d\n",i,agents[prey].fitness,agents[prey].cVal,agents[prey].tVal,agents[prey].conflicts,agents[prey].totalColor,avgFitness,clusterSize);
-
-		if(((int)agents[prey].cVal)==numVertices && agents[prey].totalColor<=knownChromaticNum)
-			break; //Solution found
-
-		improved = (agents[prey].fitness>prePreyFitness);
-		countDown = (improved) ? START_COUNTDOWN : countDown-1;
-
-		prePreyFitness = agents[prey].fitness;
-
-		if(countDown==0 && !improved){
-			startCountDown += START_COUNTDOWN;
-
-			for(int j=0;j<numAgents;j++){
-				if(j!=worstHyena){
-					for(int k=0;k<agents[j].dimension;k++){
-						if(((double)rand())/RAND_MAX < CHANGE_PROB){
-							agents[j].position[k] = agents[worstHyena].position[k];
-						}
-					}
-				}
-			}
-
-			countDown = startCountDown;
-			startItr = i/2;
-		}
-		else{
-		
-			maxClusterSize = numAgents + (MIN_CLUSTER_SIZE - numAgents) * (((double)i)/maxItr);
-
-			clusterSize = getCluster(agents,numAgents,prey,worstHyena,edges,numEdges,compEdges,numCompEdges,centroid,(double)(maxColor-1),COLOR_WEIGHT,CONFLICT_WEIGHT,15);
-			//clusterSize = getCluster(agents,numAgents,prey,worstHyena,edges,numEdges,compEdges,numCompEdges,centroid,(double)(maxColor-1),COLOR_WEIGHT,CONFLICT_WEIGHT,maxClusterSize);
-			
-			//Chase the prey
-			for(int j=0;j<numAgents;j++){
-				if(j!=prey){
-					moveToCentroid(agents[j],centroid,agents[j].dimension,(double)maxColor-1.0);
-					//moveToCentroid(agents[j],centroid,agents[j].dimension);
-				}
-			}
-
-			h = H_MAX - ((H_MAX * (i-startItr))/(maxItr-startItr));
-
-			//Encircle the prey
-			for(int j=0;j<numAgents;j++){
-				if(j!=prey)
-					encircle(agents[j],agents[prey],h,(double)maxColor-1.0);
-			}
-		}
-		
-		//Update fitness of all agents
-		for(int j=0;j<numAgents;j++){
-			agents[j].conflicts = getConflicts(agents[j],edges,numEdges);
-			//Initiate totalColor
-			agents[j].totalColor = getTotalColor(agents[j]);
-			//Initiate fitness
-			agents[j].cVal = getCVal(agents[j],edges,numEdges,(double)maxColor-1);
-			agents[j].tVal = getTVal(agents[j],compEdges,numCompEdges,(double)maxColor-1);
-			agents[j].fitness = getFitness(agents[j],numEdges,numVertices,COLOR_WEIGHT,CONFLICT_WEIGHT);
-		}
-
-	}
-	
+	//End Timer
 	end = clock();
 
 	printf("\nTime taken: %lf\n",((double)(end-start))/((double)CLOCKS_PER_SEC));
-	printf("\nThe best coloration obtained: \n");
-
-	for(int i=0;i<numVertices;i++){
-		printf("%lf ",agents[prey].position[i]);
-	}
-	printf("\n");
-
-	//solution = &agents[prey];
 }
 
 void main(int argc, char *argv[]){
@@ -148,8 +46,8 @@ void main(int argc, char *argv[]){
 	}
 	
 	//If the git repo is correctly cloned the graphs must be within the same directory.
-	//char filePath[100]="TEST_DATASET/";
-	char filePath[100]="GCP_DATASET/";
+	char filePath[100]="TEST_DATASET/";
+	//char filePath[100]="GCP_DATASET/";
 	strcat(filePath,argv[1]);	//Hence the relative file is "GCP_DATASET/"+argv[1]
 
 	FILE *file;
@@ -162,18 +60,17 @@ void main(int argc, char *argv[]){
 	}
 	
 	//File has successfully been opened
-	
-	int knownChromaticNum, numVertices, numEdges, numCompEdges;
-	int edges[INF][2],compEdges[INF][2];
-	
-	getGraphInfo(file,&knownChromaticNum,&numVertices,&numEdges,&numCompEdges,edges,compEdges);
+	//Get graph related informations
+	Graph graph;
 
+	getGraphInfo(file,&graph);	
+	displayGraph(graph);
+	
 	fclose(file);
+	//File Closed
 
-	Agent solution;
-	//SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,100,knownChromaticNum,&solution);
-	SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,numVertices,knownChromaticNum,&solution);
-	//SHO_GCP(edges,numEdges,compEdges,numCompEdges,numVertices,MAX_ITR,NUM_AGENTS,knownChromaticNum,knownChromaticNum,&solution);
+	//Search for optimal coloration begins
+	SHO_GCP(graph,MAX_ITR,NUM_AGENTS,CONFLICT_WEIGHT,COLOR_WEIGHT,graph.knownChromaticNum);
 
 	//printf("Obtained Solution:\n");
 	//printAgent(solution);
