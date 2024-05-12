@@ -9,6 +9,8 @@
 		int numEdges;
 		int knownChromaticNum;
 
+		int maxDegree;
+
 		bool **adj;
 	}Graph;
 
@@ -34,7 +36,21 @@
 				graph->adj[v2-1][v1-1] = true;
 			}
 		}
+		//Adj initialization ends
 
+		int degree = 0;
+		int maxDegree = -INF;
+		for(int i=0;i<(graph->numVertices);i++){
+			degree = 0;
+			for(int j=0;j<(graph->numVertices);j++){
+				degree += graph->adj[i][j];
+			}
+
+			if(degree > maxDegree)
+				maxDegree = degree;
+		}
+
+		graph->maxDegree = maxDegree;
 		//Graph initialization ends
 	}
 
@@ -43,6 +59,7 @@
 		printf("Known Chromatic Num: %d\n",graph.knownChromaticNum);
 		printf("Number of vertices: %d\n",graph.numVertices);
 		printf("Number of Edges: %d\n",graph.numEdges);
+		printf("Max Degree: %d\n",graph.maxDegree);
 		
 		printf("Adj matrix:\n");
 		for(int i=0;i<graph.numVertices;i++){

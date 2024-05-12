@@ -81,6 +81,24 @@
 	double getFitness(Agent agent,double conflictWeight,double colorWeight){
 		return conflictWeight * agent.cVal + colorWeight * agent.tVal;
 	}
+	
+	//getTotalColor finds the total number of unique colors used by the given agent.
+	//The function assumes that atmost numVertices number of color is used.
+	int getTotalColor(Agent agent){
+		bool *table = (bool *)calloc(agent.dimension,sizeof(bool));
+
+		for(int i=0;i<agent.dimension;i++){
+			table[agent.position[i]] = true;
+		}
+
+		int totalColor = 0;
+
+		for(int i=0;i<agent.dimension;i++){
+			totalColor += table[i];
+		}
+
+		return totalColor;
+	}
 
 	//Initializes a random population
 	void getRandomAgents(Graph graph,Agent agents[],int numAgents,int maxPos,double conflictWeight,double colorWeight){
@@ -138,6 +156,7 @@
 		return prey;
 	}
 
+	//bound bounds the solutions in the positive quadrant
 	double bound(double var,double maxPos){
 		if(var < 0.0)
 			return 0.0;
@@ -161,9 +180,16 @@
 
 			hyenaPos = prey.position[i] - vecE * dist;
 			hyena.position[i] = (int)round(bound(hyenaPos,maxPos));
-
-			printf("Dimension: %d\n",i);
-			printf("VecB = %lf, dist = %lf, vecE = %lf\n",vecB,dist,vecE);
 		}
+	}
+
+	double findAvgFitness(Agent agents[],int numAgents){
+		double sumFitness = 0.0;
+
+		for(int i=0;i<numAgents;i++){
+			sumFitness += agents[i].fitness;
+		}
+
+		return sumFitness/numAgents;
 	}
 #endif

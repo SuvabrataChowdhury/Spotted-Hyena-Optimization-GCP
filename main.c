@@ -10,8 +10,8 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 1
-#define NUM_AGENTS 2
+#define MAX_ITR 1000
+#define NUM_AGENTS 100
 #define COLOR_WEIGHT 0.25
 #define CONFLICT_WEIGHT 0.75
 
@@ -30,8 +30,6 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 
 	//Initialize the preHuntAgents with random agents
 	getRandomAgents(graph,preHuntAgents,numAgents,maxColors-1,conflictWeight,colorWeight);
-	printf("PreHuntAgents:\n");
-	displayAgents(preHuntAgents,numAgents);
 
 	//Allocate memory for position of postHuntAgents which will be used for comparison purpose
 	for(int i=0;i<numAgents;i++){
@@ -39,28 +37,32 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 		copyAgent(&preHuntAgents[i],&postHuntAgents[i]);
 	}
 
-	printf("PostHuntAgents:\n");
-	displayAgents(postHuntAgents,numAgents);
-
 	double h = H_MAX;
 	//End of initialization
 
 	int prey,randAgent,target;
+	int preyTotalColor;
 	double random;
+	double avgFitness = findAvgFitness(preHuntAgents,numAgents);
+
 	//Hunt begins
+	printf("Iteration,Fitness,cVal,tVal,Total Color,AVG fitness\n");
+
+	prey = locatePrey(preHuntAgents,numAgents);
+	preyTotalColor = getTotalColor(preHuntAgents[prey]);
+	avgFitness = findAvgFitness(preHuntAgents,numAgents);
+	printf("%d,%lf,%lf,%lf,%d,%lf\n",0,postHuntAgents[prey].fitness,postHuntAgents[prey].cVal,postHuntAgents[prey].tVal,preyTotalColor,avgFitness);
 	for(int i=0;i<maxItr;i++){
+		//Break Condition
+		if(((int)preHuntAgents[prey].cVal)==graph.numVertices && preyTotalColor<=graph.knownChromaticNum)
+			break;
+
 		//Info for current iteration
-		//Locate prey
-		prey = locatePrey(postHuntAgents,numAgents);
-		
-		printf("Prey : %d\n",prey);
-		
 		//Locate a random agent which is not prey
 		randAgent = rand()%numAgents;
 		while(numAgents!=1 && randAgent==prey){
 			randAgent = rand()%numAgents;
 		}
-
 		
 		//Select the target.
 		//P(target = prey) = 0.5
@@ -74,9 +76,6 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 		}
 		//Info collected
 
-		printf("Encirclation begins\n");
-		printf("Target is Agent[%d]\n",target);
-		
 		//Encirclation begins
 		//Update the value of H
 		h = H_MAX - ((double)(H_MAX * i))/maxItr;
@@ -93,16 +92,36 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 			postHuntAgents[j].fitness = getFitness(postHuntAgents[j],CONFLICT_WEIGHT,COLOR_WEIGHT);
 		}
 		//Encirclation ends
-		printf("Encirclation ends\n");
-		
-		printf("After Iteration\n");
-		displayAgents(postHuntAgents,numAgents);
+
+		//Retention process begins
+		for(int j=0;j<numAgents;j++){
+			//If after hunting agent improves then
+			if(postHuntAgents[j].fitness>preHuntAgents[j].fitness){
+				//retain the position
+				copyAgent(&postHuntAgents[j],&preHuntAgents[j]);
+			}
+			else{
+				//Else, revert back
+				copyAgent(&preHuntAgents[j],&postHuntAgents[j]);
+			}
+		}
+		//Retention process ends
+
+		prey = locatePrey(postHuntAgents,numAgents);
+		preyTotalColor = getTotalColor(postHuntAgents[prey]);
+		avgFitness = findAvgFitness(preHuntAgents,numAgents);
+		printf("%d,%lf,%lf,%lf,%d,%lf\n",i+1,postHuntAgents[prey].fitness,postHuntAgents[prey].cVal,postHuntAgents[prey].tVal,preyTotalColor,avgFitness);
 	}
 
 	//End Timer
 	end = clock();
 
 	printf("\nTime taken: %lf\n",((double)(end-start))/((double)CLOCKS_PER_SEC));
+	printf("Best solution found:\n");
+	for(int i=0;i<graph.numVertices;i++){
+		printf("%d ",preHuntAgents[prey].position[i]);
+	}
+	printf("\n");
 }
 
 void main(int argc, char *argv[]){
@@ -114,8 +133,8 @@ void main(int argc, char *argv[]){
 	}
 	
 	//If the git repo is correctly cloned the graphs must be within the same directory.
-	char filePath[100]="TEST_DATASET/";
-	//char filePath[100]="GCP_DATASET/";
+	//char filePath[100]="TEST_DATASET/";
+	char filePath[100]="GCP_DATASET/";
 	strcat(filePath,argv[1]);	//Hence the relative file is "GCP_DATASET/"+argv[1]
 
 	FILE *file;
@@ -132,12 +151,14 @@ void main(int argc, char *argv[]){
 	Graph graph;
 
 	getGraphInfo(file,&graph);	
-	displayGraph(graph);
-	
+	//displayGraph(graph);
+
 	fclose(file);
 	//File Closed
 
 	//Search for optimal coloration begins
+	//SHO_GCP(graph,MAX_ITR,NUM_AGENTS,CONFLICT_WEIGHT,COLOR_WEIGHT,graph.numVertices);
+	//SHO_GCP(graph,MAX_ITR,NUM_AGENTS,CONFLICT_WEIGHT,COLOR_WEIGHT,graph.maxDegree+1);
 	SHO_GCP(graph,MAX_ITR,NUM_AGENTS,CONFLICT_WEIGHT,COLOR_WEIGHT,graph.knownChromaticNum);
 
 	//printf("Obtained Solution:\n");
