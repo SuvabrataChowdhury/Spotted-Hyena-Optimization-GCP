@@ -138,7 +138,16 @@
 		return prey;
 	}
 
-	void encircle(Agent prey,Agent hyena,double h){
+	double bound(double var,double maxPos){
+		if(var < 0.0)
+			return 0.0;
+		else if(var > maxPos)
+			return maxPos;
+		else
+			return var;
+	}
+
+	void encircle(Agent prey,Agent hyena,double h,double maxPos){
 		double dist = 0.0;
 		double vecB = 0.0;
 		double vecE = 0.0;
@@ -151,7 +160,7 @@
 			vecE = ((2.0 * h * rand())/RAND_MAX) - h;
 
 			hyenaPos = prey.position[i] - vecE * dist;
-			hyena.position[i] = (int)round(hyenaPos);
+			hyena.position[i] = (int)round(bound(hyenaPos,maxPos));
 
 			printf("Dimension: %d\n",i);
 			printf("VecB = %lf, dist = %lf, vecE = %lf\n",vecB,dist,vecE);

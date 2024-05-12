@@ -11,7 +11,7 @@
 #include"agents.h"
 
 #define MAX_ITR 1
-#define NUM_AGENTS 10
+#define NUM_AGENTS 2
 #define COLOR_WEIGHT 0.25
 #define CONFLICT_WEIGHT 0.75
 
@@ -19,7 +19,7 @@
 
 clock_t start,end;
 
-void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double colorWeight,int maxPos){
+void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double colorWeight,int maxColors){
 	//Start Timer
 	start = clock();
 
@@ -29,7 +29,7 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 	Agent postHuntAgents[numAgents];
 
 	//Initialize the preHuntAgents with random agents
-	getRandomAgents(graph,preHuntAgents,numAgents,maxPos-1,conflictWeight,colorWeight);
+	getRandomAgents(graph,preHuntAgents,numAgents,maxColors-1,conflictWeight,colorWeight);
 	printf("PreHuntAgents:\n");
 	displayAgents(preHuntAgents,numAgents);
 
@@ -53,10 +53,14 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 		//Locate prey
 		prey = locatePrey(postHuntAgents,numAgents);
 		
+		printf("Prey : %d\n",prey);
+		
 		//Locate a random agent which is not prey
 		randAgent = rand()%numAgents;
-		while(randAgent==prey)
+		while(numAgents!=1 && randAgent==prey){
 			randAgent = rand()%numAgents;
+		}
+
 		
 		//Select the target.
 		//P(target = prey) = 0.5
@@ -70,21 +74,26 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 		}
 		//Info collected
 
+		printf("Encirclation begins\n");
+		printf("Target is Agent[%d]\n",target);
+		
 		//Encirclation begins
 		//Update the value of H
 		h = H_MAX - ((double)(H_MAX * i))/maxItr;
 		for(int j=0;j<numAgents;j++){
 			if(j!=target){
-				encircle(postHuntAgents[target],postHuntAgents[j],h);
+				encircle(postHuntAgents[target],postHuntAgents[j],h,(double)maxColors-1.0);
 			}
 		}
-		//Encirclation ends
-
+		
+		//Get the fitness of each agents after encirclation
 		for(int j=0;j<numAgents;j++){
 			postHuntAgents[j].cVal = getCVal(graph,postHuntAgents[j].position);
 			postHuntAgents[j].tVal = getTVal(graph,postHuntAgents[j].position);
 			postHuntAgents[j].fitness = getFitness(postHuntAgents[j],CONFLICT_WEIGHT,COLOR_WEIGHT);
 		}
+		//Encirclation ends
+		printf("Encirclation ends\n");
 		
 		printf("After Iteration\n");
 		displayAgents(postHuntAgents,numAgents);
@@ -97,7 +106,7 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 }
 
 void main(int argc, char *argv[]){
-	srand((unsigned)time(NULL));
+	srand(time(0));
 
 	if(argc<2){	//If argument count is less than 2 then
 		printf("Please Provide the file name\n");
