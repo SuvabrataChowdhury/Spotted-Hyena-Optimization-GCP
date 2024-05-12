@@ -28,9 +28,68 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 	Agent preHuntAgents[numAgents];
 	Agent postHuntAgents[numAgents];
 
+	//Initialize the preHuntAgents with random agents
 	getRandomAgents(graph,preHuntAgents,numAgents,maxPos-1,conflictWeight,colorWeight);
+	printf("PreHuntAgents:\n");
 	displayAgents(preHuntAgents,numAgents);
-	
+
+	//Allocate memory for position of postHuntAgents which will be used for comparison purpose
+	for(int i=0;i<numAgents;i++){
+		postHuntAgents[i].position = (int *)calloc(graph.numVertices,sizeof(int));
+		copyAgent(&preHuntAgents[i],&postHuntAgents[i]);
+	}
+
+	printf("PostHuntAgents:\n");
+	displayAgents(postHuntAgents,numAgents);
+
+	double h = H_MAX;
+	//End of initialization
+
+	int prey,randAgent,target;
+	double random;
+	//Hunt begins
+	for(int i=0;i<maxItr;i++){
+		//Info for current iteration
+		//Locate prey
+		prey = locatePrey(postHuntAgents,numAgents);
+		
+		//Locate a random agent which is not prey
+		randAgent = rand()%numAgents;
+		while(randAgent==prey)
+			randAgent = rand()%numAgents;
+		
+		//Select the target.
+		//P(target = prey) = 0.5
+		//P(target = any agent other than prey) = 0.5/(numAgents-1);
+		random = ((double)rand())/RAND_MAX;
+		if(random<0.50){
+			target = prey;
+		}
+		else{
+			target = randAgent;
+		}
+		//Info collected
+
+		//Encirclation begins
+		//Update the value of H
+		h = H_MAX - ((double)(H_MAX * i))/maxItr;
+		for(int j=0;j<numAgents;j++){
+			if(j!=target){
+				encircle(postHuntAgents[target],postHuntAgents[j],h);
+			}
+		}
+		//Encirclation ends
+
+		for(int j=0;j<numAgents;j++){
+			postHuntAgents[j].cVal = getCVal(graph,postHuntAgents[j].position);
+			postHuntAgents[j].tVal = getTVal(graph,postHuntAgents[j].position);
+			postHuntAgents[j].fitness = getFitness(postHuntAgents[j],CONFLICT_WEIGHT,COLOR_WEIGHT);
+		}
+		
+		printf("After Iteration\n");
+		displayAgents(postHuntAgents,numAgents);
+	}
+
 	//End Timer
 	end = clock();
 
