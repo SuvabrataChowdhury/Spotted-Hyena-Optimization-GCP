@@ -82,20 +82,6 @@
 	double getFitness(Agent agent,double conflictWeight,double colorWeight){
 		return conflictWeight * agent.cVal + colorWeight * agent.tVal;
 	}
-
-	int getConflicts(Graph graph,Agent agent){
-		int conflicts = 0;
-
-		for(int i=0;i<graph.numVertices;i++){
-			for(int j=0;j<graph.numVertices;j++){
-				if(i<j && graph.adj[i][j]==1 && agent.position[i]==agent.position[j]){
-					conflicts++;
-				}
-			}
-		}
-
-		return conflicts;
-	}
 	
 	//getTotalColor finds the total number of unique colors used by the given agent.
 	//The function assumes that atmost numVertices number of color is used.
@@ -181,93 +167,6 @@
 			return var;
 	}
 
-	//addVectors adds two vectors vec1 and vec2 and stores the result in vec1
-	void addVectors(int vec1[],int vec2[],int dimension){
-		for(int i=0;i<dimension;i++){
-			vec1[i] = vec1[i] + vec2[i];
-		}
-	}
-
-	void getCluster(Graph graph,Agent agents[],int numAgents,int target,int maxPos,int centroid[],double conflictWeight,double colorWeight){
-		//First select the suitable region in the search space
-		//Initialize the dummyAgent
-		Agent dummyAgent;
-		dummyAgent.dimension = agents[target].dimension;
-		dummyAgent.position = (int*) calloc(dummyAgent.dimension,sizeof(int));
-
-		//Get a dummyAgent which is close to the target
-		int trFactors[] = {0,0,1,-1};
-		int numTrFactors = sizeof(trFactors)/sizeof(trFactors[0]);
-		for(int i=0;i<dummyAgent.dimension;i++){
-			dummyAgent.position[i] = bound(agents[target].position[i] + trFactors[rand()%numTrFactors],maxPos);
-		}
-
-		//Find the fitness of such agent
-		dummyAgent.cVal = getCVal(graph,dummyAgent.position);
-		dummyAgent.tVal = getTVal(graph,dummyAgent.position);
-		dummyAgent.fitness = getFitness(dummyAgent,conflictWeight,colorWeight);
-		//End of initialization of the dummyAgent
-
-		printf("DummyAgent info,\n");
-		printf("Dimension: %d\n",dummyAgent.dimension);
-		printf("Position:\n");
-		for(int i=0;i<dummyAgent.dimension;i++){
-			printf("%d ",dummyAgent.position[i]);
-		}
-		printf("\nC Value: %lf\n",dummyAgent.cVal);
-		printf("T Value: %lf\n",dummyAgent.tVal);
-		printf("Fitness: %lf\n",dummyAgent.fitness);
-
-		//Begin constructing the cluster
-		int clusterSize;
-
-		double maxFitness = (dummyAgent.fitness>agents[target].fitness)?dummyAgent.fitness:agents[target].fitness;
-		double minFitness = (dummyAgent.fitness<agents[target].fitness)?dummyAgent.fitness:agents[target].fitness;
-		printf("\nSelection Range: %lf to %lf\n",minFitness,maxFitness);
-		for(int i=0;i<numAgents;i++){
-			//If the agent's fitness lies within the range then include it in the cluster
-			if(i!=target && (agents[i].fitness>(minFitness-EPSILON) && agents[i].fitness<(maxFitness+EPSILON))){
-				printf("Agent[%d] selected\n",i);
-				addVectors(centroid,agents[i].position,agents[i].dimension);
-				clusterSize++;
-			}
-		}
-
-		//If dummyAgent has exceeded the target in fitness then include target in the cluster and replace target with dummyAgent,
-		if(dummyAgent.fitness>agents[target].fitness){
-			printf("Dummy Exceeded target\n");
-			addVectors(centroid,agents[target].position,agents[target].dimension);
-			copyAgent(&dummyAgent,&agents[target]);
-		}
-		else{
-		//else, include dummyAgent in cluster let the target retain its position 
-			printf("Target remains same\n");
-			addVectors(centroid,dummyAgent.position,agents[target].dimension);
-		}
-		clusterSize++;
-		//cluster construction ends
-
-		//Centroid construction begins
-		printf("Centroid:\n");
-		for(int i=0;i<agents[target].dimension;i++){
-			centroid[i] = (int)round(((double)centroid[i])/clusterSize);
-			printf("%d ",centroid[i]);
-		}
-		printf("\n");
-		//Centroid construction ends
-	}
-
-	/*
-	double uniformRandom(int levels){
-		int range = rand()%levels;
-
-		double diffRandom = (((double)rand())/RAND_MAX)*(1.0/levels);
-
-		return diffRandom + (((double)range)/levels);
-	}
-	*/
-
-	//encircle uses the equations to move the hyena towards or away from prey
 	void encircle(Agent prey,Agent hyena,double h,double maxPos){
 		double dist = 0.0;
 		double vecB = 0.0;

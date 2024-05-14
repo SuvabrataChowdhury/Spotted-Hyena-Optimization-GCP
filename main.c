@@ -10,12 +10,12 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 5
-#define NUM_AGENTS 10
+#define MAX_ITR 1000
+#define NUM_AGENTS 100
+#define COLOR_WEIGHT 0.25
 #define CONFLICT_WEIGHT 0.75
-#define COLOR_WEIGHT (1.0-CONFLICT_WEIGHT)
 
-#define H_MAX 5.0
+#define H_MAX 2.0
 
 clock_t start,end;
 
@@ -30,7 +30,6 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 
 	//Initialize the preHuntAgents with random agents
 	getRandomAgents(graph,preHuntAgents,numAgents,maxColors-1,conflictWeight,colorWeight);
-	displayAgents(preHuntAgents,numAgents);
 
 	//Allocate memory for position of postHuntAgents which will be used for comparison purpose
 	for(int i=0;i<numAgents;i++){
@@ -39,25 +38,20 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 	}
 
 	double h = H_MAX;
-
-	int *centroid = (int *)calloc(graph.numVertices,sizeof(int));
 	//End of initialization
 
 	int prey,randAgent,target;
-	int preyTotalColor,preyConflicts;
+	int preyTotalColor;
 	double random;
 	double avgFitness = findAvgFitness(preHuntAgents,numAgents);
 
-	int numImproved = 0;
-
 	//Hunt begins
-	//printf("Iteration,Fitness,cVal,tVal,Conflicts,Total Color,AVG fitness\n");
+	printf("Iteration,Fitness,cVal,tVal,Total Color,AVG fitness\n");
 
 	prey = locatePrey(preHuntAgents,numAgents);
-	preyConflicts = getConflicts(graph,preHuntAgents[prey]);
 	preyTotalColor = getTotalColor(preHuntAgents[prey]);
 	avgFitness = findAvgFitness(preHuntAgents,numAgents);
-	//printf("%d,%lf,%lf,%lf,%d,%d,%lf\n",0,postHuntAgents[prey].fitness,postHuntAgents[prey].cVal,postHuntAgents[prey].tVal,preyConflicts,preyTotalColor,avgFitness);
+	printf("%d,%lf,%lf,%lf,%d,%lf\n",0,postHuntAgents[prey].fitness,postHuntAgents[prey].cVal,postHuntAgents[prey].tVal,preyTotalColor,avgFitness);
 	for(int i=0;i<maxItr;i++){
 		//Break Condition
 		if(((int)preHuntAgents[prey].cVal)==graph.numVertices && preyTotalColor<=graph.knownChromaticNum)
@@ -81,19 +75,8 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 			target = randAgent;
 		}
 		//Info collected
-		printf("Target: Agent[%d]\n",target);
 
 		//Encirclation begins
-		//Form the cluster about the target
-		getCluster(graph,preHuntAgents,numAgents,target,maxColors-1,centroid,conflictWeight,colorWeight);
-
-		for(int j=0;j<numAgents;j++){
-			for(int dim=0;dim<graph.numVertices;dim++){
-				postHuntAgents[j].position[dim] = centroid[dim];
-			}
-		}
-		//cluster formation ends
-
 		//Update the value of H
 		h = H_MAX - ((double)(H_MAX * i))/maxItr;
 		for(int j=0;j<numAgents;j++){
@@ -116,7 +99,6 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 			if(postHuntAgents[j].fitness>preHuntAgents[j].fitness){
 				//retain the position
 				copyAgent(&postHuntAgents[j],&preHuntAgents[j]);
-				numImproved++;
 			}
 			else{
 				//Else, revert back
@@ -126,19 +108,9 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 		//Retention process ends
 
 		prey = locatePrey(postHuntAgents,numAgents);
-		preyConflicts = getConflicts(graph,postHuntAgents[prey]);
 		preyTotalColor = getTotalColor(postHuntAgents[prey]);
 		avgFitness = findAvgFitness(preHuntAgents,numAgents);
-		//printf("%d,%lf,%lf,%lf,%d,%d,%lf\n",i+1,postHuntAgents[prey].fitness,postHuntAgents[prey].cVal,postHuntAgents[prey].tVal,preyConflicts,preyTotalColor,avgFitness);
-
-		//Revert centroid back to a null vector
-		for(int j=0;j<graph.numVertices;j++)
-			centroid[j] = 0;
-
-		printf("\nIteration[%d]\n",i);
-		displayAgents(postHuntAgents,numAgents);
-		printf("%d agents improved\n",numImproved);
-		numImproved = 0;
+		printf("%d,%lf,%lf,%lf,%d,%lf\n",i+1,postHuntAgents[prey].fitness,postHuntAgents[prey].cVal,postHuntAgents[prey].tVal,preyTotalColor,avgFitness);
 	}
 
 	//End Timer
@@ -161,8 +133,8 @@ void main(int argc, char *argv[]){
 	}
 	
 	//If the git repo is correctly cloned the graphs must be within the same directory.
-	char filePath[100]="TEST_DATASET/";
-	//char filePath[100]="GCP_DATASET/";
+	//char filePath[100]="TEST_DATASET/";
+	char filePath[100]="GCP_DATASET/";
 	strcat(filePath,argv[1]);	//Hence the relative file is "GCP_DATASET/"+argv[1]
 
 	FILE *file;
