@@ -184,6 +184,16 @@
 		}
 	}
 
+	void retain(Agent preState,Agent postState){
+		int randIndex = rand()%preState.dimension;
+
+		for(int i=0;i<postState.dimension;i++){
+			if(preState.position[i]==preState.position[randIndex]){
+				postState.position[i] = preState.position[i];
+			}
+		}
+	}
+
 	double findAvgFitness(Agent agents[],int numAgents){
 		double sumFitness = 0.0;
 

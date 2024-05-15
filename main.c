@@ -17,6 +17,8 @@
 
 #define H_MAX 2.0
 
+#define RETAINTION_PROB 0.80
+
 clock_t start,end;
 
 void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double colorWeight,int maxColors){
@@ -57,6 +59,7 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 		if(((int)preHuntAgents[prey].cVal)==graph.numVertices && preyTotalColor<=graph.knownChromaticNum)
 			break;
 
+		//Exploration and Exploitation begins
 		//Encirclation begins
 		//Update vector h
 		h = H_MAX - H_MAX*(((double)i)/MAX_ITR);
@@ -70,16 +73,25 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 			//After prey selection encircle it
 			encircle(preHuntAgents[target],postHuntAgents[j],h,(double)maxColors-1.0);
 		}
+		//Encirclation ends
 		
+		//Begin retaintion process
+		for(int j=0;j<numAgents;j++){
+			if(((double)rand())/RAND_MAX < RETAINTION_PROB){
+				retain(preHuntAgents[j],postHuntAgents[j]);
+			}
+		}
+		//End of retaintion process
+
 		//Get the fitness of each agents after encirclation
 		for(int j=0;j<numAgents;j++){
 			postHuntAgents[j].cVal = getCVal(graph,postHuntAgents[j].position);
 			postHuntAgents[j].tVal = getTVal(graph,postHuntAgents[j].position);
 			postHuntAgents[j].fitness = getFitness(postHuntAgents[j],CONFLICT_WEIGHT,COLOR_WEIGHT);
 		}
-		//Encirclation ends
+		//Exploration and Exploitation ends
 
-		//Retention process begins
+		//Comparison process begins
 		for(int j=0;j<numAgents;j++){
 			//If after hunting agent improves then
 			if(postHuntAgents[j].fitness>preHuntAgents[j].fitness){
@@ -91,7 +103,7 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 				copyAgent(&preHuntAgents[j],&postHuntAgents[j]);
 			}
 		}
-		//Retention process ends
+		//Comparison process ends
 
 		prey = locatePrey(postHuntAgents,numAgents);
 		preyTotalColor = getTotalColor(postHuntAgents[prey]);
