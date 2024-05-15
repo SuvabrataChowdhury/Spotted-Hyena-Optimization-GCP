@@ -17,7 +17,7 @@
 
 #define H_MAX 2.0
 
-#define RETAINTION_PROB 0.80
+#define EXCHANGE_PROB 0.80
 
 clock_t start,end;
 
@@ -75,13 +75,19 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 		}
 		//Encirclation ends
 		
-		//Begin retaintion process
+		//Begin exchange process
 		for(int j=0;j<numAgents;j++){
-			if(((double)rand())/RAND_MAX < RETAINTION_PROB){
-				retain(preHuntAgents[j],postHuntAgents[j]);
+			if(((double)rand())/RAND_MAX < EXCHANGE_PROB){
+				//Select two distinct random agents
+				int rand1 = rand()%numAgents;
+				int rand2 = rand()%numAgents;
+				while(rand1==rand2)
+					rand2=rand()%numAgents;
+
+				exchange(postHuntAgents[rand1],postHuntAgents[rand2]);
 			}
 		}
-		//End of retaintion process
+		//End of exchange process
 
 		//Get the fitness of each agents after encirclation
 		for(int j=0;j<numAgents;j++){
@@ -156,8 +162,8 @@ void main(int argc, char *argv[]){
 
 	//Search for optimal coloration begins
 	//SHO_GCP(graph,MAX_ITR,NUM_AGENTS,CONFLICT_WEIGHT,COLOR_WEIGHT,graph.numVertices);
-	//SHO_GCP(graph,MAX_ITR,NUM_AGENTS,CONFLICT_WEIGHT,COLOR_WEIGHT,graph.maxDegree+1);
-	SHO_GCP(graph,MAX_ITR,NUM_AGENTS,CONFLICT_WEIGHT,COLOR_WEIGHT,graph.knownChromaticNum);
+	SHO_GCP(graph,MAX_ITR,NUM_AGENTS,CONFLICT_WEIGHT,COLOR_WEIGHT,graph.maxDegree+1);
+	//SHO_GCP(graph,MAX_ITR,NUM_AGENTS,CONFLICT_WEIGHT,COLOR_WEIGHT,graph.knownChromaticNum);
 
 	//printf("Obtained Solution:\n");
 	//printAgent(solution);
