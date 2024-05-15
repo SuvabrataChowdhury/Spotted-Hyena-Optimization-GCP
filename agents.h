@@ -185,14 +185,17 @@
 	}
 
 	void exchange(Agent agent1,Agent agent2){
-		int randIndex = rand()%agent1.dimension;
+		int randIndex1 = rand()%agent1.dimension;
+		int randIndex2 = rand()%agent1.dimension;
+		while(randIndex2==randIndex1)
+			randIndex2 = rand()%agent1.dimension;
 
-		for(int i=0;i<agent1.dimension;i++){
-			if(agent1.position[i]==agent1.position[randIndex]){
-				int temp = agent1.position[i];
-				agent1.position[i] = agent2.position[i];
-				agent2.position[i] = temp;
-			}
+		int minIndex = (randIndex1<randIndex2)?randIndex1:randIndex2;
+		int maxIndex = (randIndex1>randIndex2)?randIndex1:randIndex2;
+		for(int i=minIndex;i<maxIndex;i++){
+			int temp = agent1.position[i];
+			agent1.position[i] = agent2.position[i];
+			agent2.position[i] = temp;
 		}
 	}
 

@@ -121,6 +121,13 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 	end = clock();
 
 	printf("\nTime taken: %lf\n",((double)(end-start))/((double)CLOCKS_PER_SEC));
+	if(postHuntAgents[prey].cVal!=graph.numVertices)
+		printf("Proper Coloring not found\n");
+	else{
+		printf("Proper Coloring found\n");
+		printf("Obtained Chromatic number: %d\n",preyTotalColor);
+		printf("Required Chromatic number: %d\n",graph.knownChromaticNum);
+	}
 	printf("Best solution found:\n");
 	for(int i=0;i<graph.numVertices;i++){
 		printf("%d ",preHuntAgents[prey].position[i]);
