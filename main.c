@@ -10,10 +10,10 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 1000
+#define MAX_ITR 10000
 #define NUM_AGENTS 100
-#define COLOR_WEIGHT 0.25
-#define CONFLICT_WEIGHT 0.75
+#define COLOR_WEIGHT 0.05
+#define CONFLICT_WEIGHT 0.95
 
 #define H_MAX 2.0
 
@@ -52,37 +52,23 @@ void SHO_GCP(Graph graph,int maxItr,int numAgents,double conflictWeight,double c
 	preyTotalColor = getTotalColor(preHuntAgents[prey]);
 	avgFitness = findAvgFitness(preHuntAgents,numAgents);
 	printf("%d,%lf,%lf,%lf,%d,%lf\n",0,postHuntAgents[prey].fitness,postHuntAgents[prey].cVal,postHuntAgents[prey].tVal,preyTotalColor,avgFitness);
-	for(int i=0;i<maxItr;i++){
+	for(int i=0;i<MAX_ITR;i++){
 		//Break Condition
 		if(((int)preHuntAgents[prey].cVal)==graph.numVertices && preyTotalColor<=graph.knownChromaticNum)
 			break;
 
-		//Info for current iteration
-		//Locate a random agent which is not prey
-		randAgent = rand()%numAgents;
-		while(numAgents!=1 && randAgent==prey){
-			randAgent = rand()%numAgents;
-		}
-		
-		//Select the target.
-		//P(target = prey) = 0.5
-		//P(target = any agent other than prey) = 0.5/(numAgents-1);
-		random = ((double)rand())/RAND_MAX;
-		if(random<0.50){
-			target = prey;
-		}
-		else{
-			target = randAgent;
-		}
-		//Info collected
-
 		//Encirclation begins
-		//Update the value of H
-		h = H_MAX - ((double)(H_MAX * i))/maxItr;
+		//Update vector h
+		h = H_MAX - H_MAX*(((double)i)/MAX_ITR);
+
+		//For each agent select it's prey
 		for(int j=0;j<numAgents;j++){
-			if(j!=target){
-				encircle(postHuntAgents[target],postHuntAgents[j],h,(double)maxColors-1.0);
-			}
+			target = rand()%numAgents;
+			while(target==j)
+				target = rand()%numAgents;
+
+			//After prey selection encircle it
+			encircle(preHuntAgents[target],postHuntAgents[j],h,(double)maxColors-1.0);
 		}
 		
 		//Get the fitness of each agents after encirclation
