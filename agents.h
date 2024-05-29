@@ -1,211 +1,169 @@
 #ifndef __AGENTS__
 	#define __AGENTS__
 
-	#define EPSILON 0.000001
-
+	//Solution representation
 	typedef struct Agent{
-		//Solution itself
-		int dimension;
-		int *position;
+		int dimension; //Dimension of solution vector i.e., |V|
+		int *solution; //The coloration/partition
 
-		//Score of the solution i.e., fitness
-		double cVal; //Fuzzy non-conflicted vertex count
-		double tVal; //Fuzzy color share count [to be implemented...]
-
-		double fitness; //Actual score based on cVal and tVal
+		int totalColors; //Total number of distinct colors/partitions/buckets used
 	}Agent;
 
-	//cVal is a fuzzy count of non-Conflicted vertices
-	// cVal = sum for each vertex in V (1 - con_i/deg_i)
-	// here,
-	// con_i is the number of conflicting neighbours of ith vertex and
-	// deg_i is the degree of ith vertex
-	// Max value for cVal is |V|
-	double getCVal(Graph graph,int coloration[]){
-		double cVal = 0.0;
-		int conflictCount = 0;
-		int degree = 0;
-
-		for(int i=0;i<graph.numVertices;i++){
-			conflictCount = 0;
-			degree = 0;
-
-			for(int j=0;j<graph.numVertices;j++){
-				degree += graph.adj[i][j];
-
-				if(graph.adj[i][j] && coloration[i]==coloration[j]){
-					conflictCount++;
-				}
-			}
-
-			if(degree!=0)
-				cVal += (1.0-(((double)conflictCount)/degree));
-		}
-
-		return cVal;
+	void swap(int *var1,int *var2){
+		int temp = *var1;
+		*var1 = *var2;
+		*var2 = temp;
 	}
 
-	//tVal is a mesure of how many vertices share colors.
-	// tVal = sum for each vertex in V' (1 - con_i'/deg_i')
-	// here,
-	// con_i' is the number of conflicting neighbours of ith vertex in the complement graph and
-	// deg_i' is the degree of ith vertex in the complement graph
-	// Max value of tVal is |V'|
-	double getTVal(Graph graph,int coloration[]){
-		double tVal = 0.0;
-		int compConflictCount = 0;
-		int compDegree = 0;
+	void printArr(int arr[],int len){
+		for(int i=0;i<len;i++){
+			printf("%d ",arr[i]);
+		}
+		printf("\n");
+	}
 
+	void seqColor(Agent agent,int vertexSeq[],Graph graph){
+		//Initiate all three sets
+		int *set1 = (int *)calloc(graph.numVertices,sizeof(int));
+		int *set2 = (int *)calloc(graph.numVertices,sizeof(int));
+		int *set3 = (int *)calloc(graph.numVertices,sizeof(int));
+		
+		//Set pointers
+		int ptr1 = 0;
+		int ptr2 = 0;
+		int ptr3 = 0;
+
+		bool *colored = (bool *)calloc(graph.numVertices,sizeof(bool)); //lookup table to keep track of which vertices are colored
+		bool canRemain = true; //Used to check if a vertex can remain in set1
+
+		int color = 0; //Color/bucket tracker
+
+		//For each vertices in the given sequence do
 		for(int i=0;i<graph.numVertices;i++){
-			compConflictCount = 0;
-			compDegree = 0;
 
-			for(int j=0;j<graph.numVertices;j++){
-				if(i!=j){
-					compDegree += !graph.adj[i][j];
+			//If vertex is not colored then
+			if(!colored[vertexSeq[i]]){
+				//Bring the vetex in set1
+				set1[ptr1++] = vertexSeq[i];
 
-					if(!graph.adj[i][j] && coloration[i]==coloration[j]){
-						compConflictCount++;
+				//For all other vertices appearing in sequence after the current one do
+				for(int j=i+1;j<graph.numVertices;j++){
+					//If vertex is not colored
+					if(!colored[vertexSeq[j]]){
+						//If it is adjacent then
+						if(graph.adj[vertexSeq[i]][vertexSeq[j]])
+							set2[ptr2++] = vertexSeq[j]; //bring it into set2
+						else
+							set3[ptr3++] = vertexSeq[j]; //bring it into set3
 					}
 				}
+
+				//As set3 contains all vertices that are not adjacent to vertexSeq[i]
+				//they can be remain in the same bucket.
+				//For each vertices in set3 do
+				for(int j=0;j<ptr3;j++){
+					canRemain = true;
+
+					//For each vertices in set1 check
+					for(int k=0;k<ptr1;k++){
+						//if vertex in set3 is adjacent to vertex in set1
+						if(graph.adj[set3[j]][set1[k]]){
+
+							//then vertex in set3 cannot remain in set1 
+							canRemain = false;
+							
+							break;
+						}
+					}
+
+					//If the vertex in set3 is not adjacent to any vertex in set1 then
+					if(canRemain)
+						set1[ptr1++] = set3[j]; //bring it to set1
+				}
+				
+				//Set1 now contains vertices which can belong in the same bucket/color set/partition
+				for(int j=0;j<ptr1;j++){
+					colored[set1[j]] = true;
+					
+					//Bring the vertex in the same color set
+					agent.solution[set1[j]] = color;
+				}
+
+				//Bring out the next color set/bucket/partition
+				color++;
+
+				//Empty all the sets
+				ptr1 = 0;
+				ptr2 = 0;
+				ptr3 = 0;
 			}
-
-			if(compDegree!=0){
-				tVal = tVal + ((1.0*compConflictCount)/compDegree);
-			}
 		}
-
-		return tVal;
 	}
 
-	//Fitness gives more weightage to reducing the conflict
-	double getFitness(Agent agent,double conflictWeight,double colorWeight){
-		return conflictWeight * agent.cVal + colorWeight * agent.tVal;
-	}
-	
-	//getTotalColor finds the total number of unique colors used by the given agent.
-	//The function assumes that atmost numVertices number of color is used.
-	int getTotalColor(Agent agent){
-		bool *table = (bool *)calloc(agent.dimension,sizeof(bool));
+	//Shuffle uses Fisher-Yates Shuffle to generate
+	//a permutation of given n items
+	void shuffle(int items[],int numItems){
+		int randItem = 0;
 
-		for(int i=0;i<agent.dimension;i++){
-			table[agent.position[i]] = true;
+		//For each item upto the second last item do
+		for(int i=0;i<numItems-1;i++){
+			//Choose a random index in range [i,numItems-1]
+			randItem = rand()%(numItems-i) + i;
+
+			swap(&items[i],&items[randItem]); //Swap the current item with randomly chosen item
 		}
-
-		int totalColor = 0;
-
-		for(int i=0;i<agent.dimension;i++){
-			totalColor += table[i];
-		}
-
-		return totalColor;
 	}
 
-	//Initializes a random population
-	void getRandomAgents(Graph graph,Agent agents[],int numAgents,int maxPos,double conflictWeight,double colorWeight){
-		//For each agents do
+	int getTotalColor(int coloration[],int length){
+		bool *colors = (bool *)calloc(length,sizeof(int));
+
+		for(int i=0;i<length;i++){
+			colors[coloration[i]] = true;
+		}
+
+		int totalColors = 0;
+		for(int i=0;i<length;i++){
+			totalColors = totalColors + colors[i];
+		}
+
+		return totalColors;
+	}
+
+	void getInitialPopulation(Agent agents[], int numAgents, Graph graph){
+		//Get the vertex set
+		int *vertices = (int *)calloc(graph.numVertices,sizeof(int));
+		for(int i=0;i<graph.numVertices;i++){
+			vertices[i] = i;
+		}
+
+		//Perform the sequential coloration of graph with a random permutation of the vertex set.
 		for(int i=0;i<numAgents;i++){
-			//Initialize dimension
 			agents[i].dimension = graph.numVertices;
+			agents[i].solution = (int *)calloc(graph.numVertices,sizeof(int));
 
-			//Initialize the position vector which is the solution itself..
-			agents[i].position = (int *)calloc(graph.numVertices,sizeof(int));
-			for(int j=0;j<graph.numVertices;j++){
-				agents[i].position[j] = random()%(maxPos+1);
-			}
-
-			agents[i].cVal = getCVal(graph,agents[i].position);
-			agents[i].tVal = getTVal(graph,agents[i].position);
+			seqColor(agents[i],vertices,graph);
 			
-			agents[i].fitness = getFitness(agents[i],conflictWeight,colorWeight);
+			agents[i].totalColors = getTotalColor(agents[i].solution,agents[i].dimension);
+
+			//Shuffle the vertex set to get a new permutation
+			shuffle(vertices,graph.numVertices);
 		}
 	}
 
-	void displayAgents(Agent agents[],int numAgents){
-		printf("Position\tcVal\ttVal\tfitness\n");
+	void displayAgents(Agent agents[],int numAgents,Graph graph){
+		printf("#Agent\tColoration\tTotal Colors\n");
+
 		for(int i=0;i<numAgents;i++){
+			printf("%d\t",i);
+
 			for(int j=0;j<agents[i].dimension;j++){
-				printf("%d ",agents[i].position[j]);
+				printf("%d ",agents[i].solution[j]);
 			}
-			printf("\t%lf\t%lf\t%lf\n",agents[i].cVal,agents[i].tVal,agents[i].fitness);
-		}
-	}
-
-	//Deep copies agent info from source to destination
-	void copyAgent(Agent *source,Agent *dest){
-		dest->dimension = source->dimension;
-
-		for(int i=0;i<(source->dimension);i++){
-			dest->position[i] = source->position[i];
-		}
-
-		dest->cVal = source->cVal;
-		dest->tVal = source->tVal;
-		dest->fitness = source->fitness;
-	}
-
-	//Prey is the agent having maximum fitness
-	int locatePrey(Agent agents[],int numAgents){
-		int prey = 0;
-
-		for(int i=1;i<numAgents;i++){
-			if(agents[i].fitness>agents[prey].fitness){
-				prey = i;
-			}
-		}
-
-		return prey;
-	}
-
-	//bound bounds the solutions in the positive quadrant
-	double bound(double var,double maxPos){
-		if(var < 0.0)
-			return 0.0;
-		else if(var > maxPos)
-			return maxPos;
-		else
-			return var;
-	}
-
-	void encircle(Agent prey,Agent hyena,double h,double maxPos){
-		double dist = 0.0;
-		double vecB = 0.0;
-		double vecE = 0.0;
-		double hyenaPos = 0.0;
-
-		for(int i=0;i<prey.dimension;i++){
-			vecB = (2.0 * rand())/RAND_MAX;
-			dist = fabs(vecB * prey.position[i] - hyena.position[i]);
 			
-			vecE = ((2.0 * h * rand())/RAND_MAX) - h;
-
-			hyenaPos = prey.position[i] - vecE * dist;
-			hyena.position[i] = (int)round(bound(hyenaPos,maxPos));
+			if(agents[i].totalColors==graph.knownChromaticNum)
+				printf("\t%d ***\n",agents[i].totalColors); //Denotes chromatic coloring
+			else
+				printf("\t%d\n",agents[i].totalColors);
 		}
-	}
-
-	void exchange(Agent agent1,Agent agent2){
-		int randIndex1 = rand()%agent1.dimension;
-		int randIndex2 = rand()%agent1.dimension;
-		while(randIndex2==randIndex1)
-			randIndex2 = rand()%agent1.dimension;
-
-		int minIndex = (randIndex1<randIndex2)?randIndex1:randIndex2;
-		int maxIndex = (randIndex1>randIndex2)?randIndex1:randIndex2;
-		for(int i=minIndex;i<maxIndex;i++){
-			int temp = agent1.position[i];
-			agent1.position[i] = agent2.position[i];
-			agent2.position[i] = temp;
-		}
-	}
-
-	double findAvgFitness(Agent agents[],int numAgents){
-		double sumFitness = 0.0;
-
-		for(int i=0;i<numAgents;i++){
-			sumFitness += agents[i].fitness;
-		}
-
-		return sumFitness/numAgents;
 	}
 #endif
