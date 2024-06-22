@@ -11,7 +11,7 @@
 #include"agents.h"
 
 #define MAX_ITR 1
-#define NUM_AGENTS 10
+#define NUM_AGENTS 20
 
 clock_t start,end;
 
@@ -55,7 +55,11 @@ void main(int argc, char *argv[]){
 	//File Closed
 
 	//Search for optimal coloration begins
+	start = clock();
 	SHO_GCP(graph,NUM_AGENTS);
+	end = clock();
+
+	printf("Time Taken = %lf\n",(double)(end-start)/CLOCKS_PER_SEC);
 
 	//printf("Obtained Solution:\n");
 	//printAgent(solution);
