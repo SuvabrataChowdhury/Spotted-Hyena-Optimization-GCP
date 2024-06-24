@@ -10,8 +10,8 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 10
-#define NUM_AGENTS 10
+#define MAX_ITR 100
+#define NUM_AGENTS 20
 
 clock_t start,end;
 
@@ -19,11 +19,11 @@ void SHO_GCP(Graph graph,int numAgents,int maxItr){
 	Agent agents[numAgents]; //The population
 
 	getInitialPopulation(agents,numAgents,graph);
-	printf("Initial Generation:\n");
-	displayAgents(agents,numAgents,graph);
 
 	int prey = getPrey(agents,numAgents);
-	printf("Prey is agent[%d]\n",prey);
+
+	printf("Iteration,Best Partitions\n");
+	printf("0,%d\n",agents[prey].partitions);
 
 	//The hunt begins..
 	for(int i=1;i<=maxItr;i++){
@@ -45,12 +45,13 @@ void SHO_GCP(Graph graph,int numAgents,int maxItr){
 		//Find the prey as prey may be changed due to encirclation
 		prey = getPrey(agents,numAgents);
 
-		printf("\nIteration: %d\n",i);
-		displayAgents(agents,numAgents,graph);
-		printf("Prey is agent[%d]\n",prey);
+		printf("%d,%d\n",i,agents[prey].partitions);
 	}
 
-	printf("\nObtained Chromatic number: %d\n",agents[prey].partitions);
+	printf("\nObtained Coloration:\n");
+	printArr(agents[prey].coloration,graph.numVertices);
+
+	printf("Obtained Chromatic number: %d\n",agents[prey].partitions);
 	printf("Known Chromatic number: %d\n",graph.knownChromaticNum);
 
 	if(agents[prey].partitions <= graph.knownChromaticNum)
@@ -68,8 +69,8 @@ void main(int argc, char *argv[]){
 	}
 	
 	//If the git repo is correctly cloned the graphs must be within the same directory.
-	char filePath[100]="TEST_DATASET/";
-	//char filePath[100]="GCP_DATASET/";
+	//char filePath[100]="TEST_DATASET/";
+	char filePath[100]="GCP_DATASET/";
 	strcat(filePath,argv[1]);	//Hence the relative file is "GCP_DATASET/"+argv[1]
 
 	FILE *file;
