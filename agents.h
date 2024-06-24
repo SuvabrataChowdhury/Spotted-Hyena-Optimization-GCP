@@ -38,6 +38,8 @@
 		}
 	}
 
+	//Get the partitions obtained by the agent
+	//The partition count acts as fitness of each agents
 	int getPartitions(Agent agent,Graph graph){
 		int numPartitions = 0;
 
@@ -85,6 +87,7 @@
 					agent.coloration[partition[j]] = color;
 				}
 
+				//Use a new color
 				color++;
 			}
 
@@ -96,19 +99,8 @@
 	}
 
 	void getInitialPopulation(Agent agents[], int numAgents, Graph graph){
-		//Get the vertex set
-		agents[0].dimension = graph.numVertices;
-		agents[0].vertexSeq = (int *)calloc(graph.numVertices,sizeof(int));
-		agents[0].coloration = (int *)calloc(graph.numVertices,sizeof(int));
-
-		for(int i=0;i<graph.numVertices;i++){
-			agents[0].vertexSeq[i] = i;
-		}
-		
-		agents[0].partitions = getPartitions(agents[0],graph);
-
 		//Perform the sequential coloration of graph with a random permutation of the vertex set.
-		for(int i=1;i<numAgents;i++){
+		for(int i=0;i<numAgents;i++){
 			agents[i].dimension = graph.numVertices;
 			agents[i].vertexSeq = (int *)calloc(graph.numVertices,sizeof(int));
 			agents[i].coloration = (int *)calloc(graph.numVertices,sizeof(int));
@@ -118,7 +110,8 @@
 			}
 
 			//Shuffle the vertex set to get a new permutation
-			shuffle(agents[i].vertexSeq,graph.numVertices);
+			if(i!=0)
+				shuffle(agents[i].vertexSeq,graph.numVertices);
 
 			agents[i].partitions = getPartitions(agents[i],graph);
 		}
@@ -143,6 +136,49 @@
 				printf("\t%d ***\n",agents[i].partitions); //Denotes chromatic coloring
 			else
 				printf("\t%d\n",agents[i].partitions);
+		}
+	}
+
+	//Finds the agent which uses the least partitions
+	int getPrey(Agent agents[],int numAgents){
+		int prey = 0;
+
+		for(int i=1;i<numAgents;i++){
+			if(agents[i].partitions < agents[prey].partitions)
+				prey = i;
+		}
+
+		return prey;
+	}
+
+	//The heart of DSHO is encirlation.
+	//Each hyena will give some implicit weightage to the prey and based on that it will
+	//either move closer to the prey (exploitation) or move away from the prey (exploration).
+	//The surrounding radius should shrink towards prey as hunt progresses.
+	void encircle(Agent prey, Agent hyena, double fixProb){
+		bool *fixedVertices = (bool *) calloc(prey.dimension,sizeof(bool));
+		int *toBeShuffled = (int *) calloc(prey.dimension,sizeof(int));
+
+		int ptr = 0;
+
+		double random = 0.0;
+		for(int i=0;i<prey.dimension;i++){
+			random = ((double)rand())/RAND_MAX;
+			
+			if(random <= fixProb)
+				fixedVertices[prey.vertexSeq[i]] = true;
+			else
+				toBeShuffled[ptr++] = prey.vertexSeq[i];
+		}
+
+		shuffle(toBeShuffled,ptr);
+
+		int ptr1 = 0;
+		for(int i=0;i<hyena.dimension;i++){
+			if(fixedVertices[prey.vertexSeq[i]])
+				hyena.vertexSeq[i] = prey.vertexSeq[i];
+			else
+				hyena.vertexSeq[i] = toBeShuffled[ptr1++];
 		}
 	}
 #endif

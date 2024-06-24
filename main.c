@@ -10,16 +10,53 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 1
-#define NUM_AGENTS 20
+#define MAX_ITR 10
+#define NUM_AGENTS 10
 
 clock_t start,end;
 
-void SHO_GCP(Graph graph,int numAgents){
+void SHO_GCP(Graph graph,int numAgents,int maxItr){
 	Agent agents[numAgents]; //The population
 
 	getInitialPopulation(agents,numAgents,graph);
+	printf("Initial Generation:\n");
 	displayAgents(agents,numAgents,graph);
+
+	int prey = getPrey(agents,numAgents);
+	printf("Prey is agent[%d]\n",prey);
+
+	//The hunt begins..
+	for(int i=1;i<=maxItr;i++){
+		//If prey's partitions is <= knownChromatic number then stop the hunt
+		if(agents[prey].partitions <= graph.knownChromaticNum)
+			break;
+		
+		//For each hyenas do
+		for(int j=0;j<numAgents;j++){
+			if(j!=prey){
+				//Surround the prey..
+				encircle(agents[prey],agents[j],((double)i)/maxItr);
+				
+				//Find the partitions as hyena's position has changed
+				agents[j].partitions = getPartitions(agents[j],graph);
+			}
+		}
+
+		//Find the prey as prey may be changed due to encirclation
+		prey = getPrey(agents,numAgents);
+
+		printf("\nIteration: %d\n",i);
+		displayAgents(agents,numAgents,graph);
+		printf("Prey is agent[%d]\n",prey);
+	}
+
+	printf("\nObtained Chromatic number: %d\n",agents[prey].partitions);
+	printf("Known Chromatic number: %d\n",graph.knownChromaticNum);
+
+	if(agents[prey].partitions <= graph.knownChromaticNum)
+		printf("Chromatic Coloration found\n");
+	else
+		printf("Chromatic Coloration not found\n");
 }
 
 void main(int argc, char *argv[]){
@@ -56,7 +93,7 @@ void main(int argc, char *argv[]){
 
 	//Search for optimal coloration begins
 	start = clock();
-	SHO_GCP(graph,NUM_AGENTS);
+	SHO_GCP(graph,NUM_AGENTS,MAX_ITR);
 	end = clock();
 
 	printf("Time Taken = %lf\n",(double)(end-start)/CLOCKS_PER_SEC);
