@@ -10,8 +10,8 @@
 #include"graph.h"
 #include"agents.h"
 
-#define MAX_ITR 100
-#define NUM_AGENTS 20
+#define MAX_ITR 10000
+#define NUM_AGENTS 100
 
 clock_t start,end;
 
@@ -21,9 +21,11 @@ void SHO_GCP(Graph graph,int numAgents,int maxItr){
 	getInitialPopulation(agents,numAgents,graph);
 
 	int prey = getPrey(agents,numAgents);
+	
+	double avgColors = getAvgPartitions(agents,numAgents);
 
-	printf("Iteration,Best Partitions\n");
-	printf("0,%d\n",agents[prey].partitions);
+	printf("Iteration,Min Colors,Avg Colors\n");
+	printf("0,%d,%lf\n",agents[prey].partitions,avgColors);
 
 	//The hunt begins..
 	for(int i=1;i<=maxItr;i++){
@@ -44,8 +46,9 @@ void SHO_GCP(Graph graph,int numAgents,int maxItr){
 
 		//Find the prey as prey may be changed due to encirclation
 		prey = getPrey(agents,numAgents);
+		avgColors = getAvgPartitions(agents,numAgents);
 
-		printf("%d,%d\n",i,agents[prey].partitions);
+		printf("%d,%d,%lf\n",i,agents[prey].partitions,avgColors);
 	}
 
 	printf("\nObtained Coloration:\n");

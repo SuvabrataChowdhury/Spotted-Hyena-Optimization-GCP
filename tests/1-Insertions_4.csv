@@ -1,0 +1,9 @@
+Iteration,Min Colors,Avg Colors
+0,5,5.240000
+
+Obtained Coloration:
+0 1 0 1 0 1 2 0 1 0 1 0 1 2 0 1 0 1 0 1 2 3 0 1 0 1 0 1 2 0 1 0 1 0 1 2 0 1 0 1 0 1 2 3 0 1 0 1 0 1 2 0 1 0 1 0 1 2 0 1 0 1 0 1 2 3 4 
+Obtained Chromatic number: 5
+Known Chromatic number: 5
+Chromatic Coloration found
+Time Taken = 0.002552

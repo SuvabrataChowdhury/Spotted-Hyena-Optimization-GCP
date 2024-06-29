@@ -181,4 +181,14 @@
 				hyena.vertexSeq[i] = toBeShuffled[ptr1++];
 		}
 	}
+	
+	double getAvgPartitions(Agent agents[],int numAgents){
+		double sum = 0.0;
+
+		for(int i=0;i<numAgents;i++){
+			sum = sum + agents[i].partitions;
+		}
+
+		return sum/numAgents;
+	}
 #endif
