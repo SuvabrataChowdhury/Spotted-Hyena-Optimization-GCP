@@ -17,15 +17,17 @@ clock_t start,end;
 
 void SHO_GCP(Graph graph,int numAgents,int maxItr){
 	Agent agents[numAgents]; //The population
+	int* result = (int*)calloc(graph.numVertices,sizeof(int));
 
-	getInitialPopulation(agents,numAgents,graph);
+	getInitialPopulation(agents,numAgents,graph,result);
 
 	int prey = getPrey(agents,numAgents);
 	
-	double avgColors = getAvgPartitions(agents,numAgents);
+	//double avgColors = getAvgPartitions(agents,numAgents);
 
-	printf("Iteration,Min Colors,Avg Colors\n");
-	printf("0,%d,%lf\n",agents[prey].partitions,avgColors);
+	printf("Iteration,Min Colors\n");
+	printf("0,%d\n",agents[prey].partitions);
+	//printf("0,%d,%lf\n",agents[prey].partitions,avgColors);
 
 	//The hunt begins..
 	for(int i=1;i<=maxItr;i++){
@@ -40,19 +42,21 @@ void SHO_GCP(Graph graph,int numAgents,int maxItr){
 				encircle(agents[prey],agents[j],((double)i)/maxItr);
 				
 				//Find the partitions as hyena's position has changed
-				agents[j].partitions = getPartitions(agents[j],graph);
+				agents[j].partitions = getPartitions(agents[j],graph,result,false);
 			}
 		}
 
 		//Find the prey as prey may be changed due to encirclation
 		prey = getPrey(agents,numAgents);
-		avgColors = getAvgPartitions(agents,numAgents);
+		//avgColors = getAvgPartitions(agents,numAgents);
 
-		printf("%d,%d,%lf\n",i,agents[prey].partitions,avgColors);
+		//printf("%d,%d,%lf\n",i,agents[prey].partitions,avgColors);
+		printf("%d,%d\n",i,agents[prey].partitions);
 	}
 
 	printf("\nObtained Coloration:\n");
-	printArr(agents[prey].coloration,graph.numVertices);
+	getPartitions(agents[prey],graph,result,true);
+	printArr(result,graph.numVertices);
 
 	printf("Obtained Chromatic number: %d\n",agents[prey].partitions);
 	printf("Known Chromatic number: %d\n",graph.knownChromaticNum);

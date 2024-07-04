@@ -6,8 +6,6 @@
 		int dimension; //Dimension of solution vector i.e., |V|
 		
 		int *vertexSeq; //Vertex permutation for finding optimal coloration
-		int *coloration; //Coloration obtained from vertexSeq
-
 		int partitions; //Total number of partitions/buckets used
 	}Agent;
 
@@ -25,7 +23,7 @@
 	}
 
 	//Shuffle uses Fisher-Yates Shuffle to generate
-	//a permutation of given n items
+	//a random permutation of given n items
 	void shuffle(int items[],int numItems){
 		int randItem = 0;
 
@@ -38,9 +36,10 @@
 		}
 	}
 
-	//Get the partitions obtained by the agent
+	//Get the partitions obtained by the agent (Uses Squential coloration algorithm)
 	//The partition count acts as fitness of each agents
-	int getPartitions(Agent agent,Graph graph){
+	//If toBeColored = true then getPartitions stores the coloration in the coloration array
+	int getPartitions(Agent agent,Graph graph,int coloration[],bool toBeColored){
 		int numPartitions = 0;
 
 		int *partition = (int *)calloc(graph.numVertices,sizeof(int));
@@ -83,8 +82,10 @@
 
 				//Assign colors to each vertex
 				//(This block can be removed as the actual coloration is not required... )
-				for(int j=0;j<ptr;j++){
-					agent.coloration[partition[j]] = color;
+				if(toBeColored){
+					for(int j=0;j<ptr;j++){
+						coloration[partition[j]] = color;
+					}
 				}
 
 				//Use a new color
@@ -98,12 +99,11 @@
 		return color;
 	}
 
-	void getInitialPopulation(Agent agents[], int numAgents, Graph graph){
+	void getInitialPopulation(Agent agents[], int numAgents, Graph graph, int result[]){
 		//Perform the sequential coloration of graph with a random permutation of the vertex set.
 		for(int i=0;i<numAgents;i++){
 			agents[i].dimension = graph.numVertices;
 			agents[i].vertexSeq = (int *)calloc(graph.numVertices,sizeof(int));
-			agents[i].coloration = (int *)calloc(graph.numVertices,sizeof(int));
 
 			for(int j=0;j<graph.numVertices;j++){
 				agents[i].vertexSeq[j] = j;
@@ -113,23 +113,18 @@
 			if(i!=0)
 				shuffle(agents[i].vertexSeq,graph.numVertices);
 
-			agents[i].partitions = getPartitions(agents[i],graph);
+			agents[i].partitions = getPartitions(agents[i],graph,result,false);
 		}
 	}
 
 	void displayAgents(Agent agents[],int numAgents,Graph graph){
-		printf("#Agent\tVertex Sequence\tColoration\tTotal Colors\n");
+		printf("#Agent\tVertex Sequence\tTotal Colors\n");
 
 		for(int i=0;i<numAgents;i++){
 			printf("%d\t",i);
 
 			for(int j=0;j<agents[i].dimension;j++){
 				printf("%d ",agents[i].vertexSeq[j]);
-			}
-
-			printf("\t");
-			for(int j=0;j<agents[i].dimension;j++){
-				printf("%d ",agents[i].coloration[j]);
 			}
 			
 			if(agents[i].partitions==graph.knownChromaticNum)
@@ -161,6 +156,7 @@
 
 		int ptr = 0;
 
+		//Choose vertices to be fixed in their position (depends on fixProb)
 		double random = 0.0;
 		for(int i=0;i<prey.dimension;i++){
 			random = ((double)rand())/RAND_MAX;
@@ -171,8 +167,10 @@
 				toBeShuffled[ptr++] = prey.vertexSeq[i];
 		}
 
+		//Shuffle the remaining vertices
 		shuffle(toBeShuffled,ptr);
 
+		//Change hyena's position based on the new shuffled position of prey
 		int ptr1 = 0;
 		for(int i=0;i<hyena.dimension;i++){
 			if(fixedVertices[prey.vertexSeq[i]])
